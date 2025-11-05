@@ -4,28 +4,41 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 
 ## ✨ Features
 
+- **ES6 Modules** - Modern JavaScript with import/export syntax
+- **Modular Architecture** - Clean separation of concerns with dedicated directories
 - **Express.js Framework** - Fast, unopinionated, minimalist web framework
-- **AI Integration Ready** - Pre-configured for OpenRouter AI services
+- **AI Integration Ready** - Full OpenRouter AI service implementation
+- **Configuration Management** - Centralized config with environment validation
 - **Security First** - Helmet.js for security headers and CORS support
-- **Request Logging** - Morgan middleware for comprehensive logging
-- **Environment Configuration** - dotenv for secure environment management
-- **Testing Suite** - Jest testing framework with supertest integration
+- **Request Logging** - Morgan middleware with environment-specific formatting
+- **Service Layer** - Dedicated services for external API integration
+- **Utility Functions** - Common helpers for validation, logging, and responses
+- **Testing Suite** - Jest testing framework with ES6 module support
 - **Development Tools** - Nodemon for auto-restart during development
-- **Modular Architecture** - Clean separation of routes and middleware
+- **Error Handling** - Comprehensive error middleware and async handlers
+- **Graceful Shutdown** - Proper server shutdown handling
 
 ## 📁 Project Structure
 
 ```
 pulse-server/
-├── server.js              # Main application entry point
+├── server.js              # Server startup and configuration
+├── app.js                 # Express app configuration and middleware
 ├── package.json           # Dependencies and scripts
+├── jest.config.json       # Jest testing configuration
 ├── .env.local            # Environment variables (create from .env.example)
 ├── .gitignore            # Git ignore rules
+├── config/
+│   └── index.js          # Application configuration
 ├── routes/
 │   ├── api.js            # Main API router
 │   └── ai.js             # AI/OpenRouter integration routes
 ├── middleware/
 │   └── index.js          # Custom middleware functions
+├── services/
+│   └── openRouterService.js # OpenRouter AI service
+├── utils/
+│   └── index.js          # Utility functions and helpers
 └── tests/
     └── server.test.js    # Test suites
 ```

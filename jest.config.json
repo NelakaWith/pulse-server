@@ -1,0 +1,8 @@
+{
+  "testEnvironment": "node",
+  "globals": {
+    "__EXPERIMENTAL_VM_MODULES": true
+  },
+  "transform": {},
+  "testMatch": ["**/tests/**/*.test.js"]
+}

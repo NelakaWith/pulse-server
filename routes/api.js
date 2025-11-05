@@ -1,8 +1,7 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
+import aiRoutes from "./ai.js";
 
-// Import route modules
-const aiRoutes = require("./ai");
+const router = express.Router();
 
 // Use route modules
 router.use("/ai", aiRoutes);
@@ -15,10 +14,10 @@ router.get("/", (req, res) => {
     description: "Ready for OpenRouter AI integration",
     availableRoutes: [
       "GET /api - API information",
-      "POST /api/ai/chat - AI chat endpoint (coming soon)",
+      "POST /api/ai/llm - AI chat endpoint (coming soon)",
       "GET /api/ai/models - Available AI models",
     ],
   });
 });
 
-module.exports = router;
+export default router;
