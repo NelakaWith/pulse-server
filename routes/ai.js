@@ -3,7 +3,7 @@ const router = express.Router();
 // const axios = require('axios'); // Uncomment when implementing OpenRouter integration
 
 // Placeholder for future OpenRouter AI integration
-router.post("/chat", async (req, res) => {
+router.post("/llm", async (req, res) => {
   try {
     // TODO: Implement OpenRouter AI chat endpoint
     res.status(501).json({
