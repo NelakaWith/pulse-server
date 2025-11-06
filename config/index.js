@@ -12,7 +12,7 @@ export const config = {
   openRouter: {
     apiKey: process.env.OPENROUTER_API_KEY,
     baseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
-    defaultModel: process.env.DEFAULT_AI_MODEL || "anthropic/claude-3-haiku",
+    defaultModel: process.env.DEFAULT_AI_MODEL || "",
     maxTokens: parseInt(process.env.MAX_TOKENS) || 1000,
     temperature: parseFloat(process.env.TEMPERATURE) || 0.7,
   },
