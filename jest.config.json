@@ -4,5 +4,6 @@
     "__EXPERIMENTAL_VM_MODULES": true
   },
   "transform": {},
-  "testMatch": ["**/tests/**/*.test.js"]
+  "testMatch": ["**/tests/**/*.test.js"],
+  "setupFiles": ["<rootDir>/jest.setup.js"]
 }

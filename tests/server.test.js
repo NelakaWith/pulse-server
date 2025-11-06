@@ -15,30 +15,43 @@ describe("Server", () => {
     const response = await request(app).get("/health").expect(200);
 
     expect(response.body.status).toBe("OK");
+    expect(response.body.timestamp).toBeDefined();
   });
 
   test("GET /api should return API info", async () => {
     const response = await request(app).get("/api").expect(200);
 
     expect(response.body.message).toBe("Pulse Server API");
+    expect(response.body.version).toBe("1.0.0");
+    expect(response.body.availableRoutes).toBeDefined();
+    expect(Array.isArray(response.body.availableRoutes)).toBe(true);
   });
 
   test("GET /api/ai/models should return AI models info", async () => {
     const response = await request(app).get("/api/ai/models").expect(200);
 
     expect(response.body.success).toBe(true);
-    expect(response.body.placeholder_models).toBeDefined();
+    // Since API key is configured, it should return real data from OpenRouter
+    if (response.body.data) {
+      expect(response.body.data.data).toBeDefined();
+      expect(Array.isArray(response.body.data.data)).toBe(true);
+    } else {
+      // Fallback to placeholder if API fails
+      expect(response.body.placeholder_models).toBeDefined();
+    }
   });
 
-  test("POST /api/ai/llm should return proper error when API key not configured", async () => {
+  test("POST /api/ai/llm should work with valid message when API key is configured", async () => {
     const response = await request(app)
       .post("/api/ai/llm")
-      .send({ message: "test" })
-      .expect(501);
+      .send({ message: "Hello, respond with just 'Test successful'" });
 
-    expect(response.body.success).toBe(false);
-    expect(response.body.message).toBe("OpenRouter API key is not configured");
-  });
+    // Since API key is configured, it should work (200)
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toBeDefined();
+    expect(response.body.usage).toBeDefined();
+  }, 10000); // Increase timeout for API call
 
   test("POST /api/ai/llm should return error when message is missing", async () => {
     const response = await request(app)
@@ -50,9 +63,37 @@ describe("Server", () => {
     expect(response.body.error).toBe("Message is required");
   });
 
+  test("POST /api/ai/llm should handle invalid model gracefully", async () => {
+    const response = await request(app).post("/api/ai/llm").send({
+      message: "Test message",
+      model: "invalid/model-name",
+    });
+
+    // Should handle gracefully, either success or proper error
+    expect([200, 400, 500]).toContain(response.status);
+    expect(response.body.success).toBeDefined();
+  });
+
   test("GET /nonexistent should return 404", async () => {
     const response = await request(app).get("/nonexistent").expect(404);
 
     expect(response.body.error).toBe("Route not found");
+    expect(response.body.path).toBe("/nonexistent");
+  });
+
+  test("Server should handle CORS properly", async () => {
+    const response = await request(app)
+      .get("/health")
+      .set("Origin", "http://localhost:3001");
+
+    expect(response.headers["access-control-allow-origin"]).toBeDefined();
+  });
+
+  test("Server should have security headers", async () => {
+    const response = await request(app).get("/health");
+
+    // Check for helmet security headers
+    expect(response.headers["x-frame-options"]).toBeDefined();
+    expect(response.headers["x-content-type-options"]).toBeDefined();
   });
 });

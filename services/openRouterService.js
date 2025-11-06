@@ -51,10 +51,13 @@ class OpenRouterService {
         usage: response.data.usage,
       };
     } catch (error) {
-      console.error(
-        "OpenRouter API Error:",
-        error.response?.data || error.message
-      );
+      // Only log errors in development, not during tests
+      if (process.env.NODE_ENV !== "test") {
+        console.error(
+          "OpenRouter API Error:",
+          error.response?.data || error.message
+        );
+      }
 
       return {
         success: false,
@@ -86,10 +89,13 @@ class OpenRouterService {
         data: response.data,
       };
     } catch (error) {
-      console.error(
-        "OpenRouter Models API Error:",
-        error.response?.data || error.message
-      );
+      // Only log errors in development, not during tests
+      if (process.env.NODE_ENV !== "test") {
+        console.error(
+          "OpenRouter Models API Error:",
+          error.response?.data || error.message
+        );
+      }
 
       return {
         success: false,

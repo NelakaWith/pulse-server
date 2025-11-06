@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from .env.local file
+dotenv.config({ path: ".env.local" });
 
 export const config = {
   // Server configuration
