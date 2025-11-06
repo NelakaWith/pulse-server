@@ -7,19 +7,71 @@ import { config } from "../config/index.js";
 const router = express.Router();
 
 /**
- * POST /api/enrichment/analyze-repository
- * Fetch GitHub repo data and send to AI for analysis
+ * POST /api/enrichment
+ * Unified endpoint for repository enrichment tasks
+ *
+ * Expected payload:
+ * {
+ *   "owner": "username",
+ *   "name": "repo-name",
+ *   "scope": "repo",
+ *   "task": "analyze" | "summarize-issues",
+ *   "question": "optional custom question for analyze task"
+ * }
  */
-router.post("/analyze-repository", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
-    const { owner, name, question } = req.body;
+    const { owner, name, scope, task, question } = req.body;
 
-    if (!owner || !name || !question) {
+    // Validate required fields
+    if (!owner || !name || !scope || !task) {
       return res.status(400).json({
         success: false,
-        error: "owner, name, and question are required",
+        error: "owner, name, scope, and task are required",
       });
     }
+
+    // Only repo scope supported for now
+    if (scope !== "repo") {
+      return res.status(400).json({
+        success: false,
+        error: "Only 'repo' scope is currently supported",
+      });
+    }
+
+    // Route based on task
+    if (task === "analyze") {
+      return handleAnalyzeTask(res, owner, name, question);
+    } else if (task === "summarize-issues") {
+      return handleSummarizeIssuesTask(res, owner, name);
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: `Unknown task: ${task}. Supported tasks: analyze, summarize-issues`,
+      });
+    }
+  } catch (error) {
+    Logger.error(
+      `Enrichment error: ${error && error.stack ? error.stack : error}`
+    );
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
+  }
+});
+
+/**
+ * Handle analyze task
+ */
+async function handleAnalyzeTask(res, owner, name, question) {
+  try {
+    // For analyze task, use a default question if not provided
+    const analysisQuestion =
+      question ||
+      "Provide a comprehensive analysis of this repository's code quality, health, and potential areas for improvement.";
+
+    Logger.info(`[Enrichment] Analyze task: ${owner}/${name}`);
 
     // Step 1: Get GitHub repository data
     Logger.info(`[Enrichment] Fetching repository: ${owner}/${name}`);
@@ -76,9 +128,9 @@ ${issuesData.nodes
     : ""
 }
 
-User Question: ${question}
+User Question: ${analysisQuestion}
 
-Please analyze this repository and answer the user's question based on the provided data.`;
+Please analyze this repository and answer the question based on the provided data.`;
 
     // Step 4: Send to AI
     Logger.info(
@@ -104,7 +156,7 @@ Please analyze this repository and answer the user's question based on the provi
     );
 
     // Step 5: Return enriched response
-    res.json({
+    return res.json({
       success: true,
       data: {
         repository: {
@@ -123,38 +175,28 @@ Please analyze this repository and answer the user's question based on the provi
     });
   } catch (error) {
     Logger.error(
-      `Enrichment error: ${error && error.stack ? error.stack : error}`
+      `Analyze task error: ${error && error.stack ? error.stack : error}`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: "Internal server error",
     });
   }
-});
+}
 
 /**
- * POST /api/enrichment/summarize-issues
- * Fetch GitHub issues and get AI summary
+ * Handle summarize-issues task
  */
-router.post("/summarize-issues", async (req, res) => {
+async function handleSummarizeIssuesTask(res, owner, name) {
   try {
-    const { owner, name, maxIssues = 10 } = req.body;
-
-    if (!owner || !name) {
-      return res.status(400).json({
-        success: false,
-        error: "owner and name are required",
-      });
-    }
+    Logger.info(`[Enrichment] Summarize-issues task: ${owner}/${name}`);
 
     // Step 1: Get repository issues
-    Logger.info(
-      `[Issues Summary] Fetching ${maxIssues} issues for ${owner}/${name}`
-    );
+    Logger.info(`[Issues Summary] Fetching issues for ${owner}/${name}`);
     const issuesResult = await githubService.getRepositoryIssues(
       owner,
       name,
-      maxIssues
+      10
     );
     if (!issuesResult.success) {
       Logger.error(
@@ -223,7 +265,7 @@ Please provide:
     );
 
     // Step 4: Return summary
-    res.json({
+    return res.json({
       success: true,
       data: {
         repository: `${owner}/${name}`,
@@ -241,15 +283,15 @@ Please provide:
     });
   } catch (error) {
     Logger.error(
-      `Issues summarization error: ${
+      `Summarize-issues task error: ${
         error && error.stack ? error.stack : error
       }`
     );
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: "Internal server error",
     });
   }
-});
+}
 
 export default router;
