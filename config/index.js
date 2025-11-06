@@ -17,6 +17,11 @@ export const config = {
     temperature: parseFloat(process.env.TEMPERATURE) || 0.7,
   },
 
+  // GitHub configuration
+  github: {
+    token: process.env.GITHUB_TOKEN,
+  },
+
   // CORS configuration
   cors: {
     origin: process.env.CORS_ORIGIN || "*",
