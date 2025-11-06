@@ -1,6 +1,6 @@
 import express from "express";
 import githubService from "../services/githubService.js";
-import openRouterService from "../services/openRouterService.js";
+import { openRouterService } from "../services/openRouterService.js";
 
 const router = express.Router();
 
