@@ -88,7 +88,7 @@ pulse-server/
 
 The server will start on `http://localhost:3000`
 
-## � Documentation
+## 📓 Documentation
 
 Complete documentation is available in the `docs/` directory:
 
