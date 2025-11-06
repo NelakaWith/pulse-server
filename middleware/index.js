@@ -1,3 +1,43 @@
+import { Logger } from "../utils/index.js";
+import { config } from "../config/index.js";
+
+// API Key validation middleware
+export const validateApiKey = (req, res, next) => {
+  // Skip validation if API key auth is disabled
+  if (!config.apiKey.enabled) {
+    return next();
+  }
+
+  // Get API key from header or query parameter
+  const apiKey = req.header("X-API-Key") || req.query.api_key;
+
+  if (!apiKey) {
+    Logger.warn(`API request rejected: Missing API key from ${req.ip}`);
+    return res.status(401).json({
+      success: false,
+      error:
+        "Access denied. API key required. Provide via X-API-Key header or ?api_key=xxx query parameter.",
+    });
+  }
+
+  // Validate API key
+  if (!config.apiKey.keys.includes(apiKey)) {
+    Logger.warn(`API request rejected: Invalid API key from ${req.ip}`);
+    return res.status(403).json({
+      success: false,
+      error: "Invalid API key.",
+    });
+  }
+
+  // Store API key in request for rate limiting differentiation
+  req.apiKey = apiKey;
+  Logger.debug(
+    `API request authenticated with key: ${apiKey.substring(0, 10)}...`
+  );
+
+  next();
+};
+
 // Authentication middleware example
 export const auth = (req, res, next) => {
   const token = req.header("Authorization");
@@ -24,31 +64,51 @@ export const auth = (req, res, next) => {
   }
 };
 
-// Rate limiting middleware example
+// Enhanced rate limiting middleware with API key support
 export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
-  const requests = new Map();
+  const requests = new Map(); // Map to track requests: "ip" or "apiKey" -> [timestamps]
 
   return (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
+    const identifier = req.apiKey ? `key:${req.apiKey}` : `ip:${ip}`; // Use API key if available
     const now = Date.now();
     const windowStart = now - windowMs;
 
-    if (!requests.has(ip)) {
-      requests.set(ip, []);
+    if (!requests.has(identifier)) {
+      requests.set(identifier, []);
     }
 
-    const ipRequests = requests.get(ip);
-    const validRequests = ipRequests.filter((time) => time > windowStart);
+    const identifierRequests = requests.get(identifier);
+    const validRequests = identifierRequests.filter(
+      (time) => time > windowStart
+    );
 
-    if (validRequests.length >= max) {
+    // Use higher limit for authenticated API keys
+    const limit = req.apiKey ? config.rateLimit.maxPerApiKey : max;
+
+    if (validRequests.length >= limit) {
+      Logger.warn(
+        `Rate limit exceeded for ${identifier}: ${validRequests.length}/${limit} requests in ${windowMs}ms`
+      );
       return res.status(429).json({
         success: false,
-        error: "Too many requests from this IP, please try again later.",
+        error: `Too many requests. Limit: ${limit} requests per ${Math.round(
+          windowMs / 1000 / 60
+        )} minutes.`,
+        retryAfter: Math.ceil((windowMs - (now - validRequests[0])) / 1000),
       });
     }
 
     validRequests.push(now);
-    requests.set(ip, validRequests);
+    requests.set(identifier, validRequests);
+
+    // Add rate limit info to response headers
+    res.set("X-RateLimit-Limit", limit.toString());
+    res.set("X-RateLimit-Remaining", (limit - validRequests.length).toString());
+    res.set(
+      "X-RateLimit-Reset",
+      new Date(validRequests[0] + windowMs).toISOString()
+    );
 
     next();
   };
@@ -69,8 +129,6 @@ export const validateRequest = (schema) => {
     next();
   };
 };
-
-import { Logger } from "../utils/index.js";
 
 // Error handling middleware
 export const errorHandler = (err, req, res, next) => {

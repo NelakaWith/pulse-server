@@ -111,8 +111,40 @@ Start here! [**QUICK_START.md**](./docs/QUICK_START.md) covers:
 - 💬 Request/response examples in multiple languages (JavaScript, PowerShell, Python)
 - ❌ Error handling guide
 - 🎯 Best practices
-- �🔧 Environment configuration
+- 🔧 Environment configuration
 - 🚀 Advanced usage
+
+### Security Guide (DevOps/Security)
+
+[**SECURITY.md**](./docs/SECURITY.md) covers:
+
+- 🔐 API Key authentication setup
+- 🛑 Rate limiting configuration
+- 🚨 Production security recommendations
+- 🔒 Best practices for API keys
+- 📊 Monitoring and logging
+- ✅ Security checklist
+
+### Frontend Integration (Frontend Developers)
+
+[**FRONTEND_INTEGRATION.md**](./docs/FRONTEND_INTEGRATION.md) provides:
+
+- 🎯 How to add API key authentication
+- 💻 Framework-specific examples (React, Vue, Angular, Svelte)
+- 🔄 Error handling patterns
+- 📊 Rate limiting strategies
+- 📝 Environment configuration
+- 🐛 Troubleshooting guide
+
+### Quick Reference (Everyone)
+
+[**API_KEY_QUICK_REFERENCE.md**](./docs/API_KEY_QUICK_REFERENCE.md) - One-page cheat sheet:
+
+- ⚡ Minimal authentication examples
+- 📊 Response headers reference
+- ⚠️ Error codes and solutions
+- 🚀 Rate limit details
+- 💡 Pro tips
 
 ### Project Vision (Stakeholders)
 
@@ -285,10 +317,15 @@ The project includes comprehensive tests for:
 
 ## 🛡️ Security Features
 
+- **API Key Authentication** - Secure API endpoints with API key validation
+- **Rate Limiting** - Automatic rate limiting per IP/API key to prevent abuse
 - **Helmet.js** - Sets various HTTP headers for security
 - **CORS** - Configurable Cross-Origin Resource Sharing
 - **Input Validation** - Built-in Express.js body parsing with size limits
 - **Error Handling** - Comprehensive error middleware
+- **Request Logging** - Audit trail for authentication failures and rate limit events
+
+📖 See [SECURITY.md](./docs/SECURITY.md) for complete security configuration and best practices.
 
 ## 📝 Development Guidelines
 
@@ -357,6 +394,9 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 
 - 📚 [Quick Start Guide](./docs/QUICK_START.md) - Get started in minutes
 - 📖 [API Reference](./docs/API_GUIDE.md) - Complete endpoint documentation
+- 🔐 [Security Guide](./docs/SECURITY.md) - Authentication, rate limiting, and best practices
+- 💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples and patterns
+- ⚡ [Quick Reference](./docs/API_KEY_QUICK_REFERENCE.md) - One-page cheat sheet
 - 🎯 [Project Purpose](./docs/PURPOSE.md) - Vision and architecture
 
 ### External Resources

@@ -37,6 +37,14 @@ export const config = {
   rateLimit: {
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // limit each IP to 100 requests per windowMs
+    maxPerApiKey: 500, // higher limit for authenticated API keys
+  },
+
+  // API Key configuration
+  apiKey: {
+    enabled: process.env.API_KEY_AUTH_ENABLED === "true",
+    keys: process.env.API_KEYS?.split(",") || [], // comma-separated list of valid API keys
+    requireForPublicRoutes: true, // whether to require API key for public routes
   },
 };
 

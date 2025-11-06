@@ -55,16 +55,40 @@ You should see:
 }
 ```
 
+### 4. Authentication with API Keys
+
+The server is configured with API Key authentication enabled. Use one of these keys:
+
+- `pulse-dev-key-123`
+- `pulse-test-key-456`
+- `sk-demo-key-789`
+
+Provide your API key in requests using the `X-API-Key` header or `api_key` query parameter.
+
 ---
 
 ## First API Call
 
-### Using cURL
+### Using cURL with API Key
 
 Analyze a repository:
 
 ```bash
 curl -X POST http://localhost:3000/api/enrichment \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: pulse-dev-key-123" \
+  -d '{
+    "owner": "octocat",
+    "name": "Hello-World",
+    "scope": "repo",
+    "task": "analyze"
+  }'
+```
+
+Or using query parameter:
+
+```bash
+curl -X POST "http://localhost:3000/api/enrichment?api_key=pulse-dev-key-123" \
   -H "Content-Type: application/json" \
   -d '{
     "owner": "octocat",
@@ -74,10 +98,14 @@ curl -X POST http://localhost:3000/api/enrichment \
   }'
 ```
 
-### Using PowerShell
+### Using PowerShell with API Key
 
 ```powershell
-$headers = @{'Content-Type'='application/json'}
+$headers = @{
+  'Content-Type' = 'application/json'
+  'X-API-Key' = 'pulse-dev-key-123'
+}
+
 $body = @{
   owner = "octocat"
   name = "Hello-World"

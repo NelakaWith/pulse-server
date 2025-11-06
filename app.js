@@ -10,7 +10,13 @@ import { config, isDevelopment } from "./config/index.js";
 import apiRoutes from "./routes/api.js";
 
 // Import middleware
-import { errorHandler, notFoundHandler } from "./middleware/index.js";
+import {
+  errorHandler,
+  notFoundHandler,
+  validateApiKey,
+  rateLimit as rateLimitMiddleware,
+} from "./middleware/index.js";
+import { Logger } from "./utils/index.js";
 
 async function createApp() {
   const app = express();
@@ -21,6 +27,21 @@ async function createApp() {
   app.use(morgan(isDevelopment ? "dev" : "combined")); // Logging
   app.use(express.json({ limit: "10mb" })); // Parse JSON bodies with limit
   app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Parse URL-encoded bodies
+
+  // Apply rate limiting globally
+  app.use(rateLimitMiddleware(config.rateLimit.windowMs, config.rateLimit.max));
+
+  // Log API key configuration on startup
+  if (config.apiKey.enabled) {
+    Logger.info(`🔐 API Key authentication is ENABLED`);
+  } else {
+    Logger.info(
+      `⚠️  API Key authentication is DISABLED (set API_KEY_AUTH_ENABLED=true to enable)`
+    );
+  }
+
+  // Apply API key validation to all API routes
+  app.use("/api", validateApiKey);
 
   // Routes
   app.use("/api", apiRoutes);
