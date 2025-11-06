@@ -20,6 +20,11 @@ export const config = {
   // GitHub configuration
   github: {
     token: process.env.GITHUB_TOKEN,
+    restApiBaseUrl:
+      process.env.GITHUB_REST_API_BASE_URL || "https://api.github.com",
+    graphqlApiBaseUrl:
+      process.env.GITHUB_GRAPHQL_API_BASE_URL ||
+      "https://api.github.com/graphql",
   },
 
   // CORS configuration

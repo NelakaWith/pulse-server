@@ -70,9 +70,11 @@ export const validateRequest = (schema) => {
   };
 };
 
+import { Logger } from "../utils/index.js";
+
 // Error handling middleware
 export const errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  Logger.error(`Error Handler: ${err.stack || err}`);
   res.status(500).json({
     error: "Internal Server Error",
     message:

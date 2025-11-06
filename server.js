@@ -1,5 +1,6 @@
 import createApp from "./app.js";
 import { config, isDevelopment } from "./config/index.js";
+import { Logger } from "./utils/index.js";
 
 const PORT = config.port;
 
@@ -10,13 +11,13 @@ async function startServer() {
 
     // Start server
     const server = app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📊 Health check: http://localhost:${PORT}/health`);
-      console.log(`🌐 API base URL: http://localhost:${PORT}/api`);
-      console.log(` Environment: ${config.nodeEnv}`);
+      Logger.info(`🚀 Server is running on port ${PORT}`);
+      Logger.info(`📊 Health check: http://localhost:${PORT}/health`);
+      Logger.info(`🌐 API base URL: http://localhost:${PORT}/api`);
+      Logger.info(`⚙️  Environment: ${config.nodeEnv}`);
 
       if (isDevelopment) {
-        console.log(
+        Logger.info(
           `🔑 OpenRouter configured: ${config.openRouter.apiKey ? "✅" : "❌"}`
         );
       }
@@ -24,9 +25,9 @@ async function startServer() {
 
     // Graceful shutdown
     const gracefulShutdown = () => {
-      console.log("🛑 Shutdown signal received, shutting down gracefully");
+      Logger.info("🛑 Shutdown signal received, shutting down gracefully");
       server.close(() => {
-        console.log("✅ Process terminated");
+        Logger.info("✅ Process terminated");
         process.exit(0);
       });
     };
@@ -36,7 +37,7 @@ async function startServer() {
 
     return server;
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    Logger.error(`❌ Failed to start server: ${error.stack || error}`);
     process.exit(1);
   }
 }

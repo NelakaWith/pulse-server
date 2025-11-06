@@ -1,13 +1,12 @@
 import { GraphQLClient, gql } from "graphql-request";
 import { config, isDevelopment } from "../config/index.js";
+import { Logger } from "../utils/index.js";
 
 class GitHubService {
   constructor() {
-    this.client = new GraphQLClient("https://api.github.com/graphql", {
+    this.client = new GraphQLClient(config.github.graphqlApiBaseUrl, {
       headers: {
-        authorization: `Bearer ${
-          config.github?.token || process.env.GITHUB_TOKEN
-        }`,
+        authorization: `Bearer ${config.github.token}`,
       },
     });
   }
@@ -60,7 +59,7 @@ class GitHubService {
       };
     } catch (error) {
       if (isDevelopment) {
-        console.error("GitHub GraphQL Error:", error);
+        Logger.error(`GitHub GraphQL Error (getRepository): ${error.message}`);
       }
       return {
         success: false,
@@ -137,7 +136,9 @@ class GitHubService {
       };
     } catch (error) {
       if (isDevelopment) {
-        console.error("GitHub GraphQL Error:", error);
+        Logger.error(
+          `GitHub GraphQL Error (getRepositoryIssues): ${error.message}`
+        );
       }
       return {
         success: false,
@@ -229,7 +230,9 @@ class GitHubService {
       };
     } catch (error) {
       if (isDevelopment) {
-        console.error("GitHub GraphQL Error:", error);
+        Logger.error(
+          `GitHub GraphQL Error (getRepositoryPullRequests): ${error.message}`
+        );
       }
       return {
         success: false,
@@ -286,7 +289,9 @@ class GitHubService {
       };
     } catch (error) {
       if (isDevelopment) {
-        console.error("GitHub GraphQL Error:", error);
+        Logger.error(
+          `GitHub GraphQL Error (getUserRepositories): ${error.message}`
+        );
       }
       return {
         success: false,
@@ -346,7 +351,9 @@ class GitHubService {
       };
     } catch (error) {
       if (isDevelopment) {
-        console.error("GitHub GraphQL Error:", error);
+        Logger.error(
+          `GitHub GraphQL Error (searchRepositories): ${error.message}`
+        );
       }
       return {
         success: false,
@@ -360,7 +367,7 @@ class GitHubService {
    * @returns {boolean} True if token is available
    */
   isConfigured() {
-    return !!(config.github?.token || process.env.GITHUB_TOKEN);
+    return !!config.github.token;
   }
 }
 

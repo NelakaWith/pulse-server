@@ -1,5 +1,6 @@
 import axios from "axios";
 import { config } from "../config/index.js";
+import { Logger } from "../utils/index.js";
 
 class OpenRouterService {
   constructor() {
@@ -53,9 +54,12 @@ class OpenRouterService {
     } catch (error) {
       // Only log errors in development, not during tests
       if (process.env.NODE_ENV !== "test") {
-        console.error(
-          "OpenRouter API Error:",
-          error.response?.data || error.message
+        Logger.error(
+          `OpenRouter API Error: ${
+            error.response?.data?.error?.message ||
+            error.response?.data?.error ||
+            error.message
+          }`
         );
       }
 
@@ -91,9 +95,12 @@ class OpenRouterService {
     } catch (error) {
       // Only log errors in development, not during tests
       if (process.env.NODE_ENV !== "test") {
-        console.error(
-          "OpenRouter Models API Error:",
-          error.response?.data || error.message
+        Logger.error(
+          `OpenRouter Models API Error: ${
+            error.response?.data?.error?.message ||
+            error.response?.data?.error ||
+            error.message
+          }`
         );
       }
 

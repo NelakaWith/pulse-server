@@ -1,5 +1,6 @@
 import express from "express";
 import { openRouterService } from "../services/openRouterService.js";
+import { Logger } from "../utils/index.js";
 
 const router = express.Router();
 
@@ -42,7 +43,7 @@ router.post("/llm", async (req, res) => {
       usage: result.usage,
     });
   } catch (error) {
-    console.error("AI endpoint error:", error);
+    Logger.error(`AI endpoint error: ${error.stack || error}`);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -81,7 +82,7 @@ router.get("/models", async (req, res) => {
       data: result.data,
     });
   } catch (error) {
-    console.error("Models endpoint error:", error);
+    Logger.error(`Models endpoint error: ${error.stack || error}`);
     res.status(500).json({
       success: false,
       error: "Internal server error",
