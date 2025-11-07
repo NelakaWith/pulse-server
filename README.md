@@ -395,7 +395,8 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - 📚 [Quick Start Guide](./docs/QUICK_START.md) - Get started in minutes
 - 📖 [API Reference](./docs/API_GUIDE.md) - Complete endpoint documentation
 - 🔐 [Security Guide](./docs/SECURITY.md) - Authentication, rate limiting, and best practices
-- 💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples and patterns
+- � [API Key Management](./docs/API_KEY_MANAGEMENT.md) - Generating, rotating, and managing API keys
+- �💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples and patterns
 - ⚡ [Quick Reference](./docs/API_KEY_QUICK_REFERENCE.md) - One-page cheat sheet
 - 🎯 [Project Purpose](./docs/PURPOSE.md) - Vision and architecture
 
