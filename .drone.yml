@@ -30,9 +30,8 @@ steps:
     image: node:20-alpine
     environment:
       NODE_ENV: test
-      # Mock API keys for testing
-      API_KEY_AUTH_ENABLED: "true"
-      API_KEYS: pulse-dev-key-123
+      # Disable API key auth in tests (tests expect auth to be disabled)
+      API_KEY_AUTH_ENABLED: "false"
       # Provide fallback values if secrets are not available
       OPENROUTER_API_KEY: "sk-or-test-key"
       GITHUB_TOKEN: "ghp_test_token"
@@ -108,8 +107,8 @@ steps:
     image: node:20-alpine
     environment:
       NODE_ENV: test
-      API_KEY_AUTH_ENABLED: "true"
-      API_KEYS: pulse-dev-key-123
+      # Disable API key auth in tests (tests expect auth to be disabled)
+      API_KEY_AUTH_ENABLED: "false"
       OPENROUTER_API_KEY: "sk-or-test-key"
       GITHUB_TOKEN: "ghp_test_token"
       FORCE_COLOR: "1"
