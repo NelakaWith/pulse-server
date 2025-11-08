@@ -27,7 +27,7 @@ Pulse Server now has a complete **semantic versioning and release management sys
    - Release workflow steps
    - Changelog format template
 
-3. **docs/CHANGELOG.md** (300+ lines)
+3. **CHANGELOG.md** (300+ lines)
 
    - Version 1.0.0 release documentation
    - Features list, dependencies, known limitations
@@ -118,7 +118,7 @@ git tag -a v1.1.0 -m "Release version 1.1.0"
 ├── 📖 Comprehensive Guides
 │   ├── docs/RELEASES.md - Full release guide
 │   ├── docs/VERSIONING.md - Quick reference
-│   └── docs/CHANGELOG.md - Version history
+│   └── CHANGELOG.md - Version history
 │
 ├── 📝 Summaries & Indexes
 │   ├── VERSIONING_SUMMARY.md - Implementation summary
@@ -323,7 +323,7 @@ Deployment:
 
 1. Read: [docs/VERSIONING.md](./VERSIONING.md) (5 min)
 2. Try: `.\release.ps1 -VersionType minor` (1 min)
-3. Review: [docs/CHANGELOG.md](./CHANGELOG.md) (5 min)
+3. Review: [CHANGELOG.md](../CHANGELOG.md) (5 min)
 
 ### Deep Dive
 
@@ -345,7 +345,7 @@ Deployment:
 
 ### Files Verified
 
-- ✅ docs/CHANGELOG.md created
+- ✅ CHANGELOG.md created
 - ✅ docs/RELEASES.md created
 - ✅ docs/VERSIONING.md created
 - ✅ release.ps1 created
@@ -417,7 +417,7 @@ This implementation teaches:
 
 ### Version History?
 
-- See: [docs/CHANGELOG.md](./CHANGELOG.md)
+- See: [CHANGELOG.md](../CHANGELOG.md)
 
 ### All Documentation?
 

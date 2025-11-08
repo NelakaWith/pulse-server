@@ -440,7 +440,7 @@ All endpoints return error responses in this format:
 | 400    | Missing required fields     | owner, name, scope, or task not provided |
 | 400    | Unknown task                | task value not recognized                |
 | 400    | Repository not found        | GitHub repository doesn't exist          |
-| 401    | GitHub token not configured | GITHUB_TOKEN env var missing             |
+| 401    | GitHub token not configured | GITHUB_API_TOKEN env var missing         |
 | 500    | AI analysis failed          | OpenRouter API error                     |
 | 500    | Internal server error       | Server-side error                        |
 
@@ -473,7 +473,7 @@ PORT=3000
 NODE_ENV=development
 
 # GitHub
-GITHUB_TOKEN=your_github_token_here
+GITHUB_API_TOKEN=your_github_token_here
 GITHUB_GRAPHQL_API_BASE_URL=https://api.github.com/graphql
 
 # OpenRouter AI

@@ -370,7 +370,7 @@ API_KEY_AUTH_ENABLED=true
 API_KEYS=sk-dev-abc123def456,sk-dev-xyz789uvw012
 
 # GitHub Configuration
-GITHUB_TOKEN=your_github_pat_here
+GITHUB_API_TOKEN=your_github_pat_here
 GITHUB_GRAPHQL_API_BASE_URL=https://api.github.com/graphql
 GITHUB_REST_API_BASE_URL=https://api.github.com
 
@@ -404,7 +404,7 @@ API_KEYS=sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61,sk-prod-9eeb3c
 CORS_ORIGIN=https://yourdomain.com
 
 # Use your production GitHub token
-GITHUB_TOKEN=github_pat_production_token_here
+GITHUB_API_TOKEN=github_pat_production_token_here
 
 # Use production OpenRouter key
 OPENROUTER_API_KEY=sk-or-production-key-here
@@ -946,7 +946,7 @@ services:
       - PORT=3000
       - API_KEY_AUTH_ENABLED=true
       - API_KEYS=${API_KEYS}
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_API_TOKEN=${GITHUB_API_TOKEN}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
     restart: unless-stopped
     volumes:
@@ -963,7 +963,7 @@ docker build -t pulse-server:latest .
 docker run -p 3000:3000 \
   -e NODE_ENV=production \
   -e API_KEYS=sk-prod-xxxxx \
-  -e GITHUB_TOKEN=xxx \
+  -e GITHUB_API_TOKEN=xxx \
   -e OPENROUTER_API_KEY=xxx \
   pulse-server:latest
 

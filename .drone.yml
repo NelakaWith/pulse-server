@@ -32,9 +32,18 @@ steps:
       NODE_ENV: test
       # Disable API key auth in tests (tests expect auth to be disabled)
       API_KEY_AUTH_ENABLED: "false"
-      # Provide fallback values if secrets are not available
-      OPENROUTER_API_KEY: "sk-or-test-key"
-      GITHUB_TOKEN: "ghp_test_token"
+      # Test environment variables
+      DEFAULT_AI_MODEL: "deepseek/deepseek-chat"
+      OPENROUTER_API_KEY:
+        from_secret: OPENROUTER_API_KEY
+      OPENROUTER_BASE_URL:
+        from_secret: OPENROUTER_BASE_URL
+      GITHUB_API_TOKEN:
+        from_secret: GITHUB_API_TOKEN
+      GITHUB_REST_API_BASE_URL:
+        from_secret: GITHUB_REST_API_BASE_URL
+      GITHUB_GRAPHQL_API_BASE_URL:
+        from_secret: GITHUB_GRAPHQL_API_BASE_URL
       # Force unbuffered output
       FORCE_COLOR: "1"
     commands:
@@ -109,8 +118,18 @@ steps:
       NODE_ENV: test
       # Disable API key auth in tests (tests expect auth to be disabled)
       API_KEY_AUTH_ENABLED: "false"
-      OPENROUTER_API_KEY: "sk-or-test-key"
-      GITHUB_TOKEN: "ghp_test_token"
+      # Test environment variables
+      DEFAULT_AI_MODEL: "deepseek/deepseek-chat"
+      OPENROUTER_API_KEY:
+        from_secret: OPENROUTER_API_KEY
+      OPENROUTER_BASE_URL:
+        from_secret: OPENROUTER_BASE_URL
+      GITHUB_API_TOKEN:
+        from_secret: GITHUB_API_TOKEN
+      GITHUB_REST_API_BASE_URL:
+        from_secret: GITHUB_REST_API_BASE_URL
+      GITHUB_GRAPHQL_API_BASE_URL:
+        from_secret: GITHUB_GRAPHQL_API_BASE_URL
       FORCE_COLOR: "1"
     commands:
       - echo "========================================"
@@ -152,7 +171,7 @@ steps:
       username:
         from_secret: deploy_username
       key:
-        from_secret: deploy_ssh_key
+        from_secret: SSH_PRIVATE_KEY
       port: 22
       target: /var/www/pulse-server
       source:
@@ -177,7 +196,7 @@ steps:
       username:
         from_secret: deploy_username
       key:
-        from_secret: deploy_ssh_key
+        from_secret: SSH_PRIVATE_KEY
       port: 22
       script:
         - cd /var/www/pulse-server
@@ -191,7 +210,7 @@ steps:
       username:
         from_secret: deploy_username
       key:
-        from_secret: deploy_ssh_key
+        from_secret: SSH_PRIVATE_KEY
       port: 22
       script:
         - echo "Checking server health..."
@@ -205,7 +224,7 @@ steps:
       username:
         from_secret: deploy_username
       key:
-        from_secret: deploy_ssh_key
+        from_secret: SSH_PRIVATE_KEY
       port: 22
       script:
         - cd /var/www/pulse-server
@@ -220,7 +239,7 @@ steps:
       username:
         from_secret: deploy_username
       key:
-        from_secret: deploy_ssh_key
+        from_secret: SSH_PRIVATE_KEY
       port: 22
       script:
         - sleep 5
