@@ -521,10 +521,17 @@ steps:
     environment:
       GITHUB_API_TOKEN:
         from_secret: GITHUB_API_TOKEN
+      SSH_PRIVATE_KEY:
+        from_secret: SSH_PRIVATE_KEY
     commands:
-      - apk add --no-cache git
+      - apk add --no-cache git openssh-client
       - git config --global user.email "ci@pulse-server.com"
       - git config --global user.name "Drone CI"
+      - mkdir -p ~/.ssh
+      - echo "$${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+      - chmod 600 ~/.ssh/id_rsa
+      - ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
+      - git config --global core.sshCommand "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new"
       - npm ci
       - |
         LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
@@ -535,7 +542,7 @@ steps:
           # Get the new version
           NEW_VERSION=$(node -p "require('./package.json').version")
           echo "New version: $NEW_VERSION"
-          # Push changes and tags
+          # Push changes and tags using SSH
           git push --follow-tags origin main
         else
           echo "Skipping release - no releasable commits"
