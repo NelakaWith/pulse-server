@@ -70,18 +70,31 @@ steps:
   - name: test-server-connectivity
     image: alpine:latest
     commands:
-      - apk add --no-cache netcat-openbsd curl
+      - apk add --no-cache openssh-client curl netcat-openbsd
       - echo "========================================"
-      - echo "🔌 Testing connection to deployment server"
+      - echo "🔌 Testing SSH connection to deployment server"
       - echo "========================================"
       - echo "Target:" $DEPLOY_HOST":22"
-      - nc -zv $DEPLOY_HOST 22 && echo "Server is reachable" || echo "Connection to port 22 FAILED"
+      - echo "User:" $DROPLET_USER
+      - nc -zv $DEPLOY_HOST 22 && echo "Port 22 is reachable" || echo "Connection to port 22 FAILED"
+      - echo ""
+      - echo "Testing SSH authentication..."
+      - mkdir -p ~/.ssh
+      - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+      - chmod 600 ~/.ssh/id_ed25519
+      - ssh-keyscan -t ed25519 $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+      - ssh -v -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 $DROPLET_USER@$DEPLOY_HOST "echo SSH connection successful" || echo "SSH connection FAILED"
+      - echo ""
       - echo "Drone runner public IP:"
       - wget -qO- ifconfig.me || curl -s ifconfig.me
       - echo "========================================"
     environment:
       DEPLOY_HOST:
         from_secret: DEPLOY_HOST
+      DROPLET_USER:
+        from_secret: DROPLET_USER
+      SSH_PRIVATE_KEY:
+        from_secret: SSH_PRIVATE_KEY
 
   - name: build-dry-run
     image: alpine:latest
