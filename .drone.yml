@@ -163,6 +163,18 @@ steps:
       - name: deploy
         path: /tmp/deploy
 
+  - name: test-connectivity
+    image: alpine:latest
+    commands:
+      - apk add --no-cache netcat-openbsd curl
+      - echo "Testing connection to $DEPLOY_HOST:22"
+      - nc -zv $DEPLOY_HOST 22 || echo "Connection to port 22 FAILED"
+      - echo "Drone runner public IP:"
+      - wget -qO- ifconfig.me || curl -s ifconfig.me
+    environment:
+      DEPLOY_HOST:
+        from_secret: DEPLOY_HOST
+
   - name: copy-to-server
     image: appleboy/drone-scp
     settings:
