@@ -51,9 +51,7 @@ router.post("/", async (req, res) => {
       });
     }
   } catch (error) {
-    Logger.error(
-      `Enrichment error: ${error && error.stack ? error.stack : error}`
-    );
+    Logger.error(`Enrichment error: ${error.stack || error}`);
     res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -174,9 +172,7 @@ Please analyze this repository and answer the question based on the provided dat
       },
     });
   } catch (error) {
-    Logger.error(
-      `Analyze task error: ${error && error.stack ? error.stack : error}`
-    );
+    Logger.error(`Analyze task error: ${error.stack || error}`);
     return res.status(500).json({
       success: false,
       error: "Internal server error",
@@ -282,11 +278,7 @@ Please provide:
       },
     });
   } catch (error) {
-    Logger.error(
-      `Summarize-issues task error: ${
-        error && error.stack ? error.stack : error
-      }`
-    );
+    Logger.error(`Summarize-issues task error: ${error.stack || error}`);
     return res.status(500).json({
       success: false,
       error: "Internal server error",
