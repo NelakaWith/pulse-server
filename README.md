@@ -14,16 +14,25 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 - [📁 Project Structure](#-project-structure)
 - [🚀 Quick Start](#-quick-start)
 - [📓 Documentation](#-documentation)
+- 📖 [Quick Start Guide](./docs/QUICK_START.md) - Environment setup and first API call
 
 ### Core Documentation
 
 - [🔄 CI/CD Pipeline](#-cicd-pipeline-with-drone-ci)
+  - 📚 [CI/CD Pipeline Guide](./docs/CI_CD_PIPELINE.md) - Complete architecture and features
+  - 🔧 [CI/CD Setup](./docs/CI_CD_SETUP.md) - Step-by-step configuration
+  - 📋 [CI/CD Quick Reference](./docs/CI_CD_QUICK_REFERENCE.md) - Commands and troubleshooting
+  - 🎨 [CI/CD Visual Workflow](./docs/CI_CD_VISUAL_WORKFLOW.md) - Pipeline diagrams and flows
 - [🔗 Key Endpoints](#-key-endpoints)
+  - 📖 [API Guide](./docs/API_GUIDE.md) - Complete endpoint documentation
 - [🔍 Frontend Contract](#-frontend-contract)
+  - 💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples
 
 ### Configuration & Setup
 
 - [🔒 API Key Management](#-api-key-management)
+  - 🔑 [API Key Management](./docs/API_KEY_MANAGEMENT.md) - Authentication setup
+  - 📝 [API Key Quick Reference](./docs/API_KEY_QUICK_REFERENCE.md) - Quick cheat sheet
 - [🤖 OpenRouter Integration](#-openrouter-integration)
 - [⚡ Rate Limiting & Performance](#-rate-limiting--performance)
 
@@ -31,14 +40,20 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 
 - [🧪 Testing](#-testing)
 - [🛡️ Security Features](#-security-features)
+  - 🛡️ [Security Guide](./docs/SECURITY.md) - Authentication and security best practices
 - [📈 Deployment](#-deployment)
+  - 🚀 [Production Setup](./docs/PRODUCTION_KEYS_SETUP.md) - Production configuration
 - [📦 Releases & Versioning](#-packages--versioning-with-conventional-commits)
+  - 🔖 [Conventional Commits](./docs/CONVENTIONAL_COMMITS.md) - Commit format guide
+  - 📊 [Versioning Guide](./docs/VERSIONING.md) - Semantic versioning details
 - [🤝 Contributing](#-contributing)
 
 ### Support & Resources
 
 - [🔗 Links](#-links)
 - [👨‍💻 Author](#-author)
+- 📋 [Complete Project Index](./docs/COMPLETE_PROJECT_INDEX.md) - Full documentation index
+- 🎯 [Project Purpose](./docs/PURPOSE.md) - Vision and architecture alignment
 
 ---
 
