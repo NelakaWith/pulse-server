@@ -65,11 +65,12 @@ export const auth = (req, res, next) => {
 };
 
 // Enhanced rate limiting middleware with API key support
+// Track all active intervals for cleanup
+const activeIntervals = [];
+
 export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
   const requests = new Map(); // Map to track requests: "ip" or "apiKey" -> [timestamps]
-
-  // Periodic cleanup of expired entries
-  setInterval(() => {
+  const cleanupInterval = setInterval(() => {
     const now = Date.now();
     const windowStart = now - windowMs;
 
@@ -84,7 +85,10 @@ export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
     }
   }, windowMs);
 
-  return (req, res, next) => {
+  // Track this interval
+  activeIntervals.push(cleanupInterval);
+
+  const middleware = (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     const identifier = req.apiKey ? `key:${req.apiKey}` : `ip:${ip}`; // Use API key if available
     const now = Date.now();
@@ -128,6 +132,22 @@ export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
 
     next();
   };
+
+  middleware.cleanup = () => {
+    clearInterval(cleanupInterval);
+    const index = activeIntervals.indexOf(cleanupInterval);
+    if (index > -1) {
+      activeIntervals.splice(index, 1);
+    }
+  };
+
+  return middleware;
+};
+
+// Export a function to cleanup all active intervals
+export const cleanupAllRateLimits = () => {
+  activeIntervals.forEach((interval) => clearInterval(interval));
+  activeIntervals.length = 0;
 };
 
 // Request validation middleware

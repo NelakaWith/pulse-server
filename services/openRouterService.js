@@ -1,6 +1,8 @@
 import axios from "axios";
 import { config } from "../config/index.js";
 import { Logger } from "../utils/index.js";
+import https from "https";
+import http from "http";
 
 class OpenRouterService {
   constructor() {
@@ -9,6 +11,12 @@ class OpenRouterService {
     this.defaultModel = config.openRouter.defaultModel;
     this.maxTokens = config.openRouter.maxTokens;
     this.temperature = config.openRouter.temperature;
+
+    // Disable keepAlive in test environment to prevent hanging connections
+    // In production, keepAlive improves performance by reusing connections
+    const keepAlive = process.env.NODE_ENV !== "test";
+    this.httpAgent = new http.Agent({ keepAlive });
+    this.httpsAgent = new https.Agent({ keepAlive });
   }
 
   /**
@@ -43,6 +51,8 @@ class OpenRouterService {
             "X-Title": "Pulse Server",
           },
           timeout: 30000, // 30 seconds timeout
+          httpAgent: this.httpAgent,
+          httpsAgent: this.httpsAgent,
         }
       );
 
@@ -94,6 +104,8 @@ class OpenRouterService {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
         },
+        httpAgent: this.httpAgent,
+        httpsAgent: this.httpsAgent,
       });
 
       return {

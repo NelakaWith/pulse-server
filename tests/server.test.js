@@ -1,11 +1,14 @@
 import request from "supertest";
 import createApp from "../app.js";
+import { cleanupAllRateLimits } from "../middleware/index.js";
 
 let app;
+let server;
 const TEST_API_KEY = "pulse-dev-key-123"; // Test API key from .env.local
 
-beforeAll(async () => {
+beforeEach(async () => {
   app = await createApp();
+  server = app.listen();
 });
 
 describe("Server", () => {
@@ -136,8 +139,9 @@ describe("Server", () => {
   });
 });
 
-afterAll(async () => {
-  if (app && app.close) {
-    await app.close();
+afterEach(async () => {
+  if (server) {
+    await new Promise((resolve) => server.close(resolve));
   }
+  cleanupAllRateLimits();
 });
