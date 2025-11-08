@@ -532,6 +532,15 @@ steps:
       - chmod 600 ~/.ssh/id_rsa
       - ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null || true
       - git config --global core.sshCommand "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=accept-new"
+      - |
+        # Convert HTTPS remote to SSH
+        REMOTE_URL=$(git config --get remote.origin.url)
+        if [[ $REMOTE_URL == https://* ]]; then
+          echo "Converting remote from HTTPS to SSH..."
+          SSH_URL=$(echo $REMOTE_URL | sed 's|https://github.com/|git@github.com:|')
+          git remote set-url origin $SSH_URL
+          echo "Remote URL updated to: $SSH_URL"
+        fi
       - npm ci
       - |
         LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
