@@ -46,6 +46,14 @@ class OpenRouterService {
         }
       );
 
+      if (process.env.NODE_ENV !== "test") {
+        Logger.info("OpenRouter API call succeeded", {
+          endpoint: "/chat/completions",
+          requestBody,
+          responseData: response.data,
+        });
+      }
+
       return {
         success: true,
         data: response.data,
