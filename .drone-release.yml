@@ -1,0 +1,111 @@
+---
+kind: pipeline
+type: docker
+name: auto-release
+
+# Automatically create release when PR is merged to main
+trigger:
+  event:
+    - push
+  branch:
+    - main
+
+steps:
+  - name: check-for-release
+    image: node:20-alpine
+    commands:
+      - apk add --no-cache git
+      - npm ci
+      - |
+        echo "Checking if release is needed..."
+        # Check if there are releasable commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found. Creating initial release."
+          echo "SHOULD_RELEASE=true" >> release.env
+        else
+          echo "Last tag: $LAST_TAG"
+          # Check for feat:, fix:, or BREAKING CHANGE: commits
+          NEW_COMMITS=$(git log $LAST_TAG..HEAD --pretty=format:"%s" | grep -E "^(feat|fix|perf|revert)(\(.*\))?:|BREAKING CHANGE:" || true)
+          if [ -n "$NEW_COMMITS" ]; then
+            echo "Found releasable commits:"
+            echo "$NEW_COMMITS"
+            echo "SHOULD_RELEASE=true" >> release.env
+          else
+            echo "No releasable commits found."
+            echo "SHOULD_RELEASE=false" >> release.env
+          fi
+        fi
+
+  - name: create-release
+    image: node:20-alpine
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - apk add --no-cache git
+      - git config --global user.email "ci@pulse-server.com"
+      - git config --global user.name "Drone CI"
+      - npm ci
+      - |
+        source release.env || true
+        if [ "$SHOULD_RELEASE" = "true" ]; then
+          echo "Creating release..."
+          npm run release
+          # Get the new version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> release.env
+          # Push changes and tags
+          git push --follow-tags origin main
+        else
+          echo "Skipping release - no releasable commits"
+        fi
+    when:
+      branch:
+        - main
+      event:
+        - push
+
+  - name: notify-release
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_chat_id
+      message: |
+        🎉 New version released!
+
+        Repository: {{ repo.name }}
+        Version: ${NEW_VERSION}
+        Branch: {{ commit.branch }}
+        Commit: {{ commit.sha }}
+        Author: {{ commit.author }}
+
+        CHANGELOG updated and tag pushed.
+    when:
+      status:
+        - success
+      branch:
+        - main
+      event:
+        - push
+
+  - name: trigger-deployment
+    image: plugins/downstream
+    settings:
+      server:
+        from_secret: drone_server
+      token:
+        from_secret: drone_token
+      fork: true
+      repositories:
+        - NelakaWith/pulse-server@main
+      params:
+        - DEPLOY_VERSION=${NEW_VERSION}
+    when:
+      branch:
+        - main
+      event:
+        - push

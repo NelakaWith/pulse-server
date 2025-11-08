@@ -1,0 +1,53 @@
+import dotenv from "dotenv";
+
+// Load environment variables from .env.local file
+dotenv.config({ path: ".env.local" });
+
+export const config = {
+  // Server configuration
+  port: process.env.PORT || 3000,
+  nodeEnv: process.env.NODE_ENV || "development",
+
+  // OpenRouter AI configuration
+  openRouter: {
+    apiKey: process.env.OPENROUTER_API_KEY,
+    baseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
+    defaultModel: process.env.DEFAULT_AI_MODEL || "",
+    maxTokens: parseInt(process.env.MAX_TOKENS) || 1000,
+    temperature: parseFloat(process.env.TEMPERATURE) || 0.7,
+  },
+
+  // GitHub configuration
+  github: {
+    token: process.env.GITHUB_TOKEN,
+    restApiBaseUrl:
+      process.env.GITHUB_REST_API_BASE_URL || "https://api.github.com",
+    graphqlApiBaseUrl:
+      process.env.GITHUB_GRAPHQL_API_BASE_URL ||
+      "https://api.github.com/graphql",
+  },
+
+  // CORS configuration
+  cors: {
+    origin: process.env.CORS_ORIGIN || "*",
+    credentials: true,
+  },
+
+  // Rate limiting configuration
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    maxPerApiKey: 500, // higher limit for authenticated API keys
+  },
+
+  // API Key configuration
+  apiKey: {
+    enabled: process.env.API_KEY_AUTH_ENABLED === "true",
+    keys: process.env.API_KEYS?.split(",") || [], // comma-separated list of valid API keys
+    requireForPublicRoutes: true, // whether to require API key for public routes
+  },
+};
+
+export const isDevelopment = config.nodeEnv === "development";
+export const isProduction = config.nodeEnv === "production";
+export const isTest = config.nodeEnv === "test";

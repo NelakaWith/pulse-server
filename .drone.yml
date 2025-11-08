@@ -1,0 +1,314 @@
+---
+kind: pipeline
+type: docker
+name: test-on-PR
+
+# Run tests on PR creation
+trigger:
+  event:
+    - pull_request
+
+steps:
+  - name: startup-check
+    image: alpine:3.19
+    commands:
+      - echo "========================================"
+      - echo "🚀 Pipeline started successfully!"
+      - echo "========================================"
+      - date
+      - echo "Alpine version:" && cat /etc/alpine-release
+      - echo "========================================"
+
+  - name: install-dependencies
+    image: node:20-alpine
+    commands:
+      - echo "Installing dependencies..."
+      - npm ci --loglevel=info
+      - echo "✅ Dependencies installed successfully"
+
+  - name: run-tests
+    image: node:20-alpine
+    environment:
+      NODE_ENV: test
+      # Disable API key auth in tests (tests expect auth to be disabled)
+      API_KEY_AUTH_ENABLED: "false"
+      # Provide fallback values if secrets are not available
+      OPENROUTER_API_KEY: "sk-or-test-key"
+      GITHUB_TOKEN: "ghp_test_token"
+      # Force unbuffered output
+      FORCE_COLOR: "1"
+    commands:
+      - echo "========================================"
+      - echo "CI Test Environment Check"
+      - echo "========================================"
+      - node --version
+      - npm --version
+      - echo "Checking Jest installation..."
+      - ls -la node_modules/jest/bin/ || echo "Jest bin not found"
+      - echo "========================================"
+      - echo "Running tests..."
+      - echo "========================================"
+      - node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors 2>&1 || exit 1
+      - echo "========================================"
+      - echo "✅ Tests completed successfully!"
+      - echo "========================================"
+
+  - name: lint-commits
+    image: node:20-alpine
+    commands:
+      - npx commitlint --from HEAD~1 --to HEAD --verbose
+
+  - name: build-dry-run
+    image: alpine:latest
+    commands:
+      - echo "🧪 Testing build steps (dry-run)..."
+      # Test build and copy process
+      - mkdir -p /tmp/deploy-test
+      - cp -r . /tmp/deploy-test/
+      # Exclude dev files
+      - rm -rf /tmp/deploy-test/node_modules
+      - rm -rf /tmp/deploy-test/.git
+      - rm -rf /tmp/deploy-test/tests
+      # Verify required files exist
+      - echo "✅ Checking required files..."
+      - test -f /tmp/deploy-test/server.js && echo "✅ server.js found"
+      - test -f /tmp/deploy-test/package.json && echo "✅ package.json found"
+      - test -f /tmp/deploy-test/ecosystem.config.js && echo "✅ ecosystem.config.js found"
+      - test -d /tmp/deploy-test/routes && echo "✅ routes/ found"
+      - test -d /tmp/deploy-test/middleware && echo "✅ middleware/ found"
+      - test -d /tmp/deploy-test/services && echo "✅ services/ found"
+      - test -d /tmp/deploy-test/utils && echo "✅ utils/ found"
+      # Show what would be deployed
+      - echo "📦 Files to be deployed:"
+      - ls -lah /tmp/deploy-test/ | grep -E "^d|server.js|package|ecosystem"
+      - echo "🧪 Build dry-run complete!"
+
+---
+kind: pipeline
+type: docker
+name: build-and-deploy
+
+# Run only when release tag is created (v*.*.*)
+trigger:
+  event:
+    - tag
+  ref:
+    - refs/tags/v*
+
+steps:
+  - name: install-dependencies
+    image: node:20-alpine
+    commands:
+      - echo "Installing dependencies..."
+      - npm ci --loglevel=info
+      - echo "✅ Dependencies installed successfully"
+
+  - name: run-tests
+    image: node:20-alpine
+    environment:
+      NODE_ENV: test
+      # Disable API key auth in tests (tests expect auth to be disabled)
+      API_KEY_AUTH_ENABLED: "false"
+      OPENROUTER_API_KEY: "sk-or-test-key"
+      GITHUB_TOKEN: "ghp_test_token"
+      FORCE_COLOR: "1"
+    commands:
+      - echo "========================================"
+      - echo "CI Test Environment Check"
+      - echo "========================================"
+      - node --version
+      - npm --version
+      - echo "Checking Jest installation..."
+      - ls -la node_modules/jest/bin/ || echo "Jest bin not found"
+      - echo "========================================"
+      - echo "Running tests..."
+      - echo "========================================"
+      - node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors 2>&1 || exit 1
+      - echo "========================================"
+      - echo "✅ Tests completed successfully!"
+      - echo "========================================"
+
+  - name: build-and-copy
+    image: alpine:latest
+    commands:
+      - echo "Building application..."
+      # Copy necessary files to deployment directory
+      - mkdir -p /tmp/deploy
+      - cp -r . /tmp/deploy/
+      # Exclude dev files
+      - rm -rf /tmp/deploy/node_modules
+      - rm -rf /tmp/deploy/.git
+      - rm -rf /tmp/deploy/tests
+      - echo "Build complete"
+    volumes:
+      - name: deploy
+        path: /tmp/deploy
+
+  - name: copy-to-server
+    image: appleboy/drone-scp
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_username
+      key:
+        from_secret: deploy_ssh_key
+      port: 22
+      target: /var/www/pulse-server
+      source:
+        - server.js
+        - package.json
+        - package-lock.json
+        - .env.production
+        - ecosystem.config.js
+        - routes/**
+        - middleware/**
+        - services/**
+        - utils/**
+      strip_components: 0
+      overwrite: true
+      rm: false
+
+  - name: install-production-deps
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_username
+      key:
+        from_secret: deploy_ssh_key
+      port: 22
+      script:
+        - cd /var/www/pulse-server
+        - npm ci --only=production
+
+  - name: health-check-before-deploy
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_username
+      key:
+        from_secret: deploy_ssh_key
+      port: 22
+      script:
+        - echo "Checking server health..."
+        - pm2 describe pulse-server || echo "App not running yet"
+
+  - name: deploy-with-pm2
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_username
+      key:
+        from_secret: deploy_ssh_key
+      port: 22
+      script:
+        - cd /var/www/pulse-server
+        - pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
+        - pm2 save
+
+  - name: health-check-after-deploy
+    image: appleboy/drone-ssh
+    settings:
+      host:
+        from_secret: deploy_host
+      username:
+        from_secret: deploy_username
+      key:
+        from_secret: deploy_ssh_key
+      port: 22
+      script:
+        - sleep 5
+        - pm2 describe pulse-server
+        - pm2 logs pulse-server --lines 20 --nostream
+        # Check if app is responding
+        - curl -f http://localhost:3000/health || exit 1
+
+  - name: notify-success
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_chat_id
+      message: |
+        ✅ Deployment successful!
+
+        Repository: {{ repo.name }}
+        Branch: {{ commit.branch }}
+        Commit: {{ commit.sha }}
+        Author: {{ commit.author }}
+        Message: {{ commit.message }}
+    when:
+      status:
+        - success
+
+  - name: notify-failure
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_chat_id
+      message: |
+        ❌ Deployment failed!
+
+        Repository: {{ repo.name }}
+        Branch: {{ commit.branch }}
+        Commit: {{ commit.sha }}
+        Author: {{ commit.author }}
+
+volumes:
+  - name: deploy
+    temp: {}
+
+---
+kind: pipeline
+type: docker
+name: release
+
+# Automatically create release when tag is pushed
+trigger:
+  event:
+    - tag
+  ref:
+    - refs/tags/v*
+
+steps:
+  - name: create-github-release
+    image: plugins/github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      title: "Release ${DRONE_TAG}"
+      note: CHANGELOG.md
+      files:
+        - package.json
+        - CHANGELOG.md
+    when:
+      event:
+        - tag
+
+  - name: notify-release
+    image: appleboy/drone-telegram
+    settings:
+      token:
+        from_secret: telegram_token
+      to:
+        from_secret: telegram_chat_id
+      message: |
+        🚀 New release published!
+
+        Tag: ${DRONE_TAG}
+        Repository: {{ repo.name }}
+        Author: {{ commit.author }}
+    when:
+      status:
+        - success
+      event:
+        - tag
