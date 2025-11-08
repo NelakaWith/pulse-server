@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/NelakaWith/pulse-server/compare/v1.2.0...v1.3.0) (2025-11-08)
+
+
+### Features
+
+* **ci:** add connectivity test step before deployment ([3e47617](https://github.com/NelakaWith/pulse-server/commit/3e47617a19891fc1a629813585258cf14c3e065c))
+* **ci:** add server connectivity test step in CI pipeline ([8351eb0](https://github.com/NelakaWith/pulse-server/commit/8351eb012bd1a0a879b39badafa16745d879d745))
+* **ci:** enhance server connectivity test with SSH authentication ([264b62c](https://github.com/NelakaWith/pulse-server/commit/264b62c5fd5cc4f12a7a7fe4313a3201bcec4c46))
+
+
+### Bug Fixes
+
+* **ci:** update secret names for deployment and GitHub release configuration ([f546c4d](https://github.com/NelakaWith/pulse-server/commit/f546c4d9a9414cb875813cc12e2559aa93f53447))
+
+## [1.2.0](https://github.com/NelakaWith/pulse-server/compare/v1.1.0...v1.2.0) (2025-11-08)
+
+
+### Features
+
+* **docs:** create CHANGELOG.md for version history and project updates ([cd8785a](https://github.com/NelakaWith/pulse-server/commit/cd8785a63d26d042f8badee691d6127ab49404b6))
+
+
+### Bug Fixes
+
+* **app:** rename GITHUB_TOKEN to GITHUB_API_TOKEN across configuration files and documentation ([2947c34](https://github.com/NelakaWith/pulse-server/commit/2947c348d2700d600dc393f388f03592525ba16a))
+* **docs:** update GITHUB_TOKEN to GITHUB_API_TOKEN in changelog and pipeline configuration ([3b38815](https://github.com/NelakaWith/pulse-server/commit/3b3881590da2a9ee2fda5f5d590d3e7acd0508c3))
+
 ## 1.1.0 (2025-11-08)
 
 ### Features
