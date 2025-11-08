@@ -18,6 +18,14 @@ steps:
     image: node:20-alpine
     environment:
       NODE_ENV: test
+      # Mock API keys for testing
+      API_KEY_AUTH_ENABLED: "true"
+      API_KEYS: pulse-dev-key-123
+      # Use secrets if available, otherwise empty (tests should handle missing keys)
+      OPENROUTER_API_KEY:
+        from_secret: openrouter_api_key
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - npm run test:ci
 
@@ -73,6 +81,12 @@ steps:
     image: node:20-alpine
     environment:
       NODE_ENV: test
+      API_KEY_AUTH_ENABLED: "true"
+      API_KEYS: pulse-dev-key-123
+      OPENROUTER_API_KEY:
+        from_secret: openrouter_api_key
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - npm run test:ci
 
