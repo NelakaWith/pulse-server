@@ -4,6 +4,44 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 
 **Version:** 1.0.0 | **License:** ISC | **Status:** Production Ready ✅
 
+---
+
+## 📖 Table of Contents
+
+### Getting Started
+
+- [✨ Features](#-features)
+- [📁 Project Structure](#-project-structure)
+- [🚀 Quick Start](#-quick-start)
+- [📓 Documentation](#-documentation)
+
+### Core Documentation
+
+- [🔄 CI/CD Pipeline](#-cicd-pipeline-with-drone-ci)
+- [🔗 Key Endpoints](#-key-endpoints)
+- [🔍 Frontend Contract](#-frontend-contract)
+
+### Configuration & Setup
+
+- [🔒 API Key Management](#-api-key-management)
+- [🤖 OpenRouter Integration](#-openrouter-integration)
+- [⚡ Rate Limiting & Performance](#-rate-limiting--performance)
+
+### Advanced Topics
+
+- [🧪 Testing](#-testing)
+- [🛡️ Security Features](#-security-features)
+- [📈 Deployment](#-deployment)
+- [📦 Releases & Versioning](#-packages--versioning-with-conventional-commits)
+- [🤝 Contributing](#-contributing)
+
+### Support & Resources
+
+- [🔗 Links](#-links)
+- [👨‍💻 Author](#-author)
+
+---
+
 ## ✨ Features
 
 - **ES6 Modules** - Modern JavaScript with import/export syntax
