@@ -135,3 +135,9 @@ describe("Server", () => {
     expect(response.body.version).toBe("1.0.0");
   });
 });
+
+afterAll(async () => {
+  if (app && app.close) {
+    await app.close();
+  }
+});
