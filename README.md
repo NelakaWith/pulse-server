@@ -4,7 +4,7 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 
 [![Build Status](https://drone.nelakawithanage.com/api/badges/NelakaWith/pulse-server/status.svg?branch=main)](https://drone.nelakawithanage.com/NelakaWith/pulse-server)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
-[![License: GPL 3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: AGPL 3.0](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![ES6 Modules](https://img.shields.io/badge/ES6-Modules-yellow)](https://nodejs.org/api/esm.html)
 [![Tests](https://img.shields.io/badge/tests-11%2F11%20passing-brightgreen)](#-testing)
 [![OpenRouter AI](https://img.shields.io/badge/OpenRouter%20AI-Integrated-blueviolet)](https://openrouter.ai/)
