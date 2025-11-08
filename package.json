@@ -1,6 +1,6 @@
 {
   "name": "pulse-server",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "AI-powered Express.js server with OpenRouter integration",
   "main": "server.js",
   "type": "module",
