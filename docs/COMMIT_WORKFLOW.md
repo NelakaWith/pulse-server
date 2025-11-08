@@ -207,7 +207,7 @@ git push origin v1.1.0
 
 ## Automatic Changelog
 
-Standard-version automatically updates `docs/CHANGELOG.md`:
+Standard-version automatically updates `CHANGELOG.md`:
 
 **Before:**
 

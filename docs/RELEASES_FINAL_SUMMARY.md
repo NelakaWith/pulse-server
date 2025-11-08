@@ -9,7 +9,7 @@
 
 - ✅ `docs/RELEASES.md` (10 KB) - Comprehensive release guide
 - ✅ `docs/VERSIONING.md` (8.3 KB) - Quick reference guide
-- ✅ `docs/CHANGELOG.md` (5.2 KB) - Version history (v1.0.0)
+- ✅ `CHANGELOG.md` (5.2 KB) - Version history (v1.0.0)
 - ✅ `IMPLEMENTATION_COMPLETE.md` (9.2 KB) - Implementation summary
 
 **Automation Scripts:**
@@ -234,7 +234,7 @@ Deployment:
 
 1. Read: [docs/VERSIONING.md](./VERSIONING.md)
 2. Try: `.\release.ps1 -VersionType minor`
-3. Review: [docs/CHANGELOG.md](./CHANGELOG.md)
+3. Review: [CHANGELOG.md](../CHANGELOG.md)
 
 ### Complete Guide (1 hour)
 
@@ -321,7 +321,7 @@ A: Use `.\release.ps1 -VersionType minor` (Windows) or `./release.sh minor` (Uni
 A: See [Semantic Versioning](https://semver.org/) or [docs/VERSIONING.md](./VERSIONING.md)
 
 **Q: Where's the changelog?**
-A: See [docs/CHANGELOG.md](./CHANGELOG.md) - follows Keep a Changelog format
+A: See [CHANGELOG.md](../CHANGELOG.md) - follows Keep a Changelog format
 
 **Q: How do I deploy a release?**
 A: See [README.md#Deployment](../README.md#📈-deployment) for 8 platform guides
@@ -369,7 +369,7 @@ You can:
 **Quick Start:**
 
 - [docs/VERSIONING.md](./VERSIONING.md) - Version management quick ref
-- [docs/CHANGELOG.md](./CHANGELOG.md) - Version history
+- [CHANGELOG.md](../CHANGELOG.md) - Version history
 
 **Complete Guides:**
 

@@ -21,7 +21,7 @@ Comprehensive release and versioning guide including:
 - Backward compatibility guidelines
 - Real-world examples
 
-### 2. **docs/CHANGELOG.md** (300+ lines)
+### 2. **CHANGELOG.md** (300+ lines)
 
 Complete changelog following "Keep a Changelog" format:
 
@@ -214,7 +214,7 @@ v1.0.0
 ```
 📦 Versioning & Releases
 ├── 📖 docs/RELEASES.md (Comprehensive guide)
-├── 📋 docs/CHANGELOG.md (Change history)
+├── 📋 CHANGELOG.md (Change history)
 ├── 📝 docs/VERSIONING.md (Quick reference)
 ├── 📜 README.md (Updated with version info)
 ├── 🔧 release.ps1 (PowerShell script)

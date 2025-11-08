@@ -106,7 +106,7 @@ Version Bumped
 (package.json updated: 1.0.0 → 1.1.0)
        ↓
 CHANGELOG Generated
-(docs/CHANGELOG.md auto-populated with changes)
+(CHANGELOG.md auto-populated with changes)
        ↓
 Git Tag Created
 (v1.1.0 created automatically)
@@ -244,7 +244,7 @@ npm run release
 #    - Any "BREAKING CHANGE" → MAJOR
 #    - Others → no bump
 # 4. Updates package.json version
-# 5. Updates docs/CHANGELOG.md
+# 5. Updates CHANGELOG.md
 # 6. Creates version commit
 # 7. Creates git tag
 ```
