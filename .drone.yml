@@ -12,7 +12,9 @@ steps:
   - name: install-dependencies
     image: node:20-alpine
     commands:
-      - npm ci
+      - echo "Installing dependencies..."
+      - npm ci --loglevel=info
+      - echo "✅ Dependencies installed successfully"
 
   - name: run-tests
     image: node:20-alpine
@@ -24,12 +26,23 @@ steps:
       # Provide fallback values if secrets are not available
       OPENROUTER_API_KEY: "sk-or-test-key"
       GITHUB_TOKEN: "ghp_test_token"
+      # Force unbuffered output
+      FORCE_COLOR: "1"
     commands:
-      - echo "Starting tests..."
-      - echo "Node version:" && node --version
-      - echo "NPM version:" && npm --version
-      - npm run test:ci
-      - echo "Tests completed!"
+      - echo "========================================"
+      - echo "CI Test Environment Check"
+      - echo "========================================"
+      - node --version
+      - npm --version
+      - echo "Checking Jest installation..."
+      - ls -la node_modules/jest/bin/ || echo "Jest bin not found"
+      - echo "========================================"
+      - echo "Running tests..."
+      - echo "========================================"
+      - node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors 2>&1 || exit 1
+      - echo "========================================"
+      - echo "✅ Tests completed successfully!"
+      - echo "========================================"
 
   - name: lint-commits
     image: node:20-alpine
@@ -77,7 +90,9 @@ steps:
   - name: install-dependencies
     image: node:20-alpine
     commands:
-      - npm ci
+      - echo "Installing dependencies..."
+      - npm ci --loglevel=info
+      - echo "✅ Dependencies installed successfully"
 
   - name: run-tests
     image: node:20-alpine
@@ -87,12 +102,22 @@ steps:
       API_KEYS: pulse-dev-key-123
       OPENROUTER_API_KEY: "sk-or-test-key"
       GITHUB_TOKEN: "ghp_test_token"
+      FORCE_COLOR: "1"
     commands:
-      - echo "Starting tests..."
-      - echo "Node version:" && node --version
-      - echo "NPM version:" && npm --version
-      - npm run test:ci
-      - echo "Tests completed!"
+      - echo "========================================"
+      - echo "CI Test Environment Check"
+      - echo "========================================"
+      - node --version
+      - npm --version
+      - echo "Checking Jest installation..."
+      - ls -la node_modules/jest/bin/ || echo "Jest bin not found"
+      - echo "========================================"
+      - echo "Running tests..."
+      - echo "========================================"
+      - node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors 2>&1 || exit 1
+      - echo "========================================"
+      - echo "✅ Tests completed successfully!"
+      - echo "========================================"
 
   - name: build-and-copy
     image: alpine:latest
