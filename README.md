@@ -2,6 +2,8 @@
 
 An AI-powered Express.js server designed for seamless integration with OpenRouter AI services. Built with modern Node.js practices and ready for production deployment.
 
+**Version:** 1.0.0 | **License:** ISC | **Status:** Production Ready ✅
+
 ## ✨ Features
 
 - **ES6 Modules** - Modern JavaScript with import/export syntax
@@ -998,6 +1000,149 @@ LOG_LEVEL=info
 
 **📖 See [SECURITY.md](./docs/SECURITY.md) for security deployment guide**
 
+## 📦 Releases & Versioning with Conventional Commits
+
+This project follows **Semantic Versioning** (MAJOR.MINOR.PATCH) with **Conventional Commits** for automatic version determination.
+
+### Current Release
+
+**Version:** `1.0.0` | **Released:** November 8, 2025
+
+### Quick Release Workflow
+
+```bash
+# 1. Make changes and commit using conventional format
+npm run commit
+# Follow interactive prompts for: type, scope, description
+
+# 2. Create automatic release (version bumped based on commits)
+npm run release
+# Analyzes commits, updates version, updates CHANGELOG.md, creates git tag
+
+# 3. Push to remote
+git push origin main --tags
+```
+
+### Version Release Process
+
+#### Automatic Release Based on Commits
+
+```bash
+# Automatic: Analyzes commits since last tag
+npm run release
+# Example: feat commits → MINOR bump (1.0.0 → 1.1.0)
+
+# Explicit: Force specific version type
+npm run release:major    # Breaking changes (1.0.0 → 2.0.0)
+npm run release:minor    # New features (1.0.0 → 1.1.0)
+npm run release:patch    # Bug fixes (1.0.0 → 1.0.1)
+npm run release:beta     # Pre-release (1.0.0 → 1.0.1-beta.0)
+```
+
+#### Commit Types for Version Bumping
+
+| Commit Type             | Version Bump | Example                     |
+| ----------------------- | ------------ | --------------------------- |
+| `feat`                  | MINOR        | `feat(api): add endpoint`   |
+| `fix`                   | PATCH        | `fix(auth): prevent bug`    |
+| `BREAKING CHANGE`       | MAJOR        | `BREAKING CHANGE: redesign` |
+| `docs`, `test`, `chore` | NONE         | No version bump             |
+
+#### Make a Conventional Commit
+
+**Interactive (Recommended):**
+
+```bash
+npm run commit
+# 1. Select type (feat, fix, docs, etc.)
+# 2. Select scope (api, auth, security, etc.)
+# 3. Enter description
+# 4. Confirm
+```
+
+**Manual:**
+
+```bash
+git commit -m "feat(api): add new endpoint"
+git commit -m "fix(auth): validate JWT claims"
+git commit -m "docs: update README"
+
+# Breaking change:
+git commit -m "feat(api): redesign response format
+
+BREAKING CHANGE: Response structure changed from
+{ success, data } to { ok, result }"
+```
+
+### Versioning Strategy
+
+| Type      | Increment | Example       | Commit Type     |
+| --------- | --------- | ------------- | --------------- |
+| **MAJOR** | X.0.0     | 1.0.0 → 2.0.0 | BREAKING CHANGE |
+| **MINOR** | x.Y.0     | 1.0.0 → 1.1.0 | feat            |
+| **PATCH** | x.y.Z     | 1.0.0 → 1.0.1 | fix / perf      |
+
+### Changelog
+
+The `docs/CHANGELOG.md` is automatically updated with each release:
+
+```markdown
+## [1.1.0] - 2025-11-08
+
+### Features
+
+- **api**: add AI vision endpoint for image analysis
+
+### Bug Fixes
+
+- **rate-limit**: prevent counter overflow
+```
+
+### Pre-release Versions
+
+```bash
+# Create beta release
+npm run release:beta
+# Result: 1.0.0 → 1.0.1-beta.0
+
+# RC (Release Candidate)
+npm run release:beta
+npm run release:beta  # Creates 1.0.1-beta.1
+```
+
+### Upcoming Releases
+
+**v1.1.0** (Planned - Q1 2026)
+
+- AI Vision endpoint for image analysis
+- Claude 3 Opus support
+- Enhanced rate limiting
+
+**v1.2.0** (Planned - Q2 2026)
+
+- Webhook support
+- Advanced rate limiting analytics
+
+**v2.0.0** (Planned - Q3 2026)
+
+- JWT authentication
+- Horizontal scaling support
+- Database persistence
+
+### Release Checklist
+
+Before releasing, verify:
+
+- [ ] All tests passing (`npm test`)
+
+- [ ] CHANGELOG.md updated
+- [ ] Version in package.json updated
+- [ ] Documentation updated
+- [ ] Git tag created
+- [ ] Security audit completed
+
+**📖 See [RELEASES.md](./docs/RELEASES.md) for detailed versioning guide**
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -1020,10 +1165,14 @@ This project is licensed under the ISC License - see the [LICENSE](LICENSE) file
 - 📚 [Quick Start Guide](./docs/QUICK_START.md) - Get started in minutes
 - 📖 [API Reference](./docs/API_GUIDE.md) - Complete endpoint documentation
 - 🔐 [Security Guide](./docs/SECURITY.md) - Authentication, rate limiting, and best practices
-- � [API Key Management](./docs/API_KEY_MANAGEMENT.md) - Generating, rotating, and managing API keys
-- �💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples and patterns
+- 📦 [Releases & Versioning](./docs/RELEASES.md) - Release process and semantic versioning
+- � [Conventional Commits](./docs/CONVENTIONAL_COMMITS.md) - Commit format for automatic versioning
+- 🔄 [Commit Workflow](./docs/COMMIT_WORKFLOW.md) - Complete workflow with automated releases
+- �🔑 [API Key Management](./docs/API_KEY_MANAGEMENT.md) - Generating, rotating, and managing API keys
+- 💻 [Frontend Integration](./docs/FRONTEND_INTEGRATION.md) - Framework examples and patterns
 - ⚡ [Quick Reference](./docs/API_KEY_QUICK_REFERENCE.md) - One-page cheat sheet
 - 🎯 [Project Purpose](./docs/PURPOSE.md) - Vision and architecture
+- 📋 [Changelog](./docs/CHANGELOG.md) - Complete release history
 
 ### External Resources
 

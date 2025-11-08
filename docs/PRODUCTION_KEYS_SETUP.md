@@ -1,3 +1,4 @@
+````markdown
 # Production API Keys & Setup Summary
 
 ## 🎉 Your Production API Keys
@@ -57,8 +58,8 @@ node utils/generateApiKey.js dev 1
 For each client/team member, provide:
 
 - One unique key
-- Documentation: [API_KEY_QUICK_REFERENCE.md](./docs/API_KEY_QUICK_REFERENCE.md)
-- Frontend guide: [FRONTEND_INTEGRATION.md](./docs/FRONTEND_INTEGRATION.md)
+- Documentation: [API_KEY_QUICK_REFERENCE.md](./API_KEY_QUICK_REFERENCE.md)
+- Frontend guide: [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md)
 
 **Example email:**
 
@@ -140,10 +141,10 @@ node utils/generateApiKey.js dev 1
 
 ## 📚 Documentation
 
-- **[API_KEY_MANAGEMENT.md](./docs/API_KEY_MANAGEMENT.md)** - Complete guide with rotation, storage, and monitoring
-- **[SECURITY.md](./docs/SECURITY.md)** - Security best practices and JWT roadmap
-- **[API_KEY_QUICK_REFERENCE.md](./docs/API_KEY_QUICK_REFERENCE.md)** - One-page cheat sheet for clients
-- **[FRONTEND_INTEGRATION.md](./docs/FRONTEND_INTEGRATION.md)** - Framework examples (React, Vue, Angular, Svelte)
+- **[API_KEY_MANAGEMENT.md](./API_KEY_MANAGEMENT.md)** - Complete guide with rotation, storage, and monitoring
+- **[SECURITY.md](./SECURITY.md)** - Security best practices and JWT roadmap
+- **[API_KEY_QUICK_REFERENCE.md](./API_KEY_QUICK_REFERENCE.md)** - One-page cheat sheet for clients
+- **[FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md)** - Framework examples (React, Vue, Angular, Svelte)
 
 ## ✅ What's Ready
 
@@ -172,3 +173,4 @@ node utils/generateApiKey.js dev 1
 **Ready to deploy!** 🚀
 
 For support, see the comprehensive guides in `docs/` directory.
+````
