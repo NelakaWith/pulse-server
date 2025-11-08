@@ -26,9 +26,9 @@ export function generateApiKey(environment = "dev") {
  * @example
  * generateApiKeys(3, 'prod')
  * // [
- * //   'sk-prod-a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
- * //   'sk-prod-b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7',
- * //   'sk-prod-c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8'
+ * //   'sk-prod-00000000000000000000000000000000',
+ * //   'sk-prod-00000000000000000000000000000001',
+ * //   'sk-prod-00000000000000000000000000000002'
  * // ]
  */
 export function generateApiKeys(count = 1, environment = "dev") {

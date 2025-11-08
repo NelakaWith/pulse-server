@@ -242,14 +242,70 @@ POST /api/enrichment
 
 **📖 For complete endpoint documentation, see [API_GUIDE.md](./docs/API_GUIDE.md)**
 
-## 🔒 Environment Variables
+## 🔒 API Key Management
 
-Create a `.env.local` file in the root directory with the following variables:
+### Overview
+
+Pulse Server uses **API Key Authentication** to secure all `/api` endpoints. This ensures that only authorized clients can access your server's functionality.
+
+### Key Types
+
+1. **Development Keys** - For local testing and development
+2. **Staging Keys** - For pre-production environment
+3. **Production Keys** - For live deployment (must be securely generated)
+
+### Generating Production API Keys
+
+Use the built-in API key generator:
+
+```bash
+# Generate 1 production key
+node utils/generateApiKey.js prod 1
+
+# Generate 3 production keys
+node utils/generateApiKey.js prod 3
+
+# Generate 5 staging keys
+node utils/generateApiKey.js staging 5
+```
+
+**Output example:**
+
+```
+🔑 Generating 3 API key(s) for prod environment:
+
+1. sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61
+2. sk-prod-9eeb3cb562a4a9af2d03caf58c55c7aa9b0551e1430d4010
+3. sk-prod-46cd217ba5cc7773c36d5e8b667ba2567cbd635201dca541
+```
+
+### How to Use API Keys
+
+#### Option 1: Header Method (Recommended)
+
+```bash
+curl -H "X-API-Key: sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61" \
+  http://localhost:3000/api/enrichment
+```
+
+#### Option 2: Query Parameter
+
+```bash
+curl "http://localhost:3000/api/enrichment?api_key=sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61"
+```
+
+### Configuration
+
+Create a `.env.local` file in the root directory:
 
 ```env
 # Server Configuration
 NODE_ENV=development
 PORT=3000
+
+# API Key Authentication
+API_KEY_AUTH_ENABLED=true
+API_KEYS=sk-dev-abc123def456,sk-dev-xyz789uvw012
 
 # GitHub Configuration
 GITHUB_TOKEN=your_github_pat_here
@@ -263,57 +319,424 @@ DEFAULT_AI_MODEL=deepseek/deepseek-chat-v3.1:free
 MAX_TOKENS=1000
 TEMPERATURE=0.7
 
+# CORS Configuration (restrict in production)
+CORS_ORIGIN=http://localhost:3000,https://yourdomain.com
+
 # Logging
 LOG_LEVEL=info
 ```
+
+### Production Deployment
+
+For production, create a `.env.production` file with generated keys:
+
+```env
+NODE_ENV=production
+PORT=3000
+
+# ⚠️ IMPORTANT: Generate NEW keys for production
+API_KEY_AUTH_ENABLED=true
+API_KEYS=sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61,sk-prod-9eeb3cb562a4a9af2d03caf58c55c7aa9b0551e1430d4010
+
+# Restrict CORS to your domain only
+CORS_ORIGIN=https://yourdomain.com
+
+# Use your production GitHub token
+GITHUB_TOKEN=github_pat_production_token_here
+
+# Use production OpenRouter key
+OPENROUTER_API_KEY=sk-or-production-key-here
+```
+
+### Security Best Practices
+
+✅ **DO:**
+
+- Generate new keys for each environment (dev, staging, prod)
+- Store keys in `.env.local` or environment variables (never in version control)
+- Use HTTPS in production (never send keys over HTTP)
+- Rotate keys regularly
+- Use restrictive CORS settings in production
+- Log all authentication failures
+- Monitor rate limit usage
+
+❌ **DON'T:**
+
+- Commit `.env.local` or `.env.production` files to git
+- Hardcode API keys in your application
+- Reuse development keys in production
+- Share API keys via email or Slack
+- Expose API keys in client-side code
+- Leave API_KEY_AUTH_ENABLED=false in production
+
+**📖 See [API_KEY_MANAGEMENT.md](./docs/API_KEY_MANAGEMENT.md) for detailed key management guide**
+
+**📖 See [SECURITY.md](./docs/SECURITY.md) for complete security configuration**
 
 **📖 See [QUICK_START.md](./docs/QUICK_START.md#setup) for detailed setup instructions**
 
 ## 🤖 OpenRouter Integration
 
-This server is fully integrated with OpenRouter AI. Features include:
+### Overview
 
-1. **AI Chat Completions** - Direct access to multiple AI models
+Pulse Server is fully integrated with **OpenRouter AI**, a unified platform for accessing multiple AI models including:
+
+- OpenAI GPT models
+- Anthropic Claude
+- Google Gemini
+- Meta Llama
+- DeepSeek
+- And 50+ more models
+
+### Features
+
+1. **AI Chat Completions** - Direct access to multiple AI models via unified API
 2. **Repository Analysis** - AI-powered code quality and repository health analysis
 3. **Issue Summarization** - Automatic summarization of repository issues
 4. **Flexible Model Selection** - Switch between different AI models via configuration
+5. **Cost Optimization** - Use free-tier models for development and testing
+6. **Token Management** - Configurable max tokens and temperature settings
 
-To enable AI features:
+### Setup
 
-1. **Get an OpenRouter API key** from [OpenRouter.ai](https://openrouter.ai)
-2. **Add your API key** to `.env.local` (OPENROUTER_API_KEY)
-3. **Start using AI endpoints** - See [QUICK_START.md](./docs/QUICK_START.md) for examples
+1. **Get an OpenRouter API key**
 
-### Example: Analyze a Repository with AI
+   - Visit [OpenRouter.ai](https://openrouter.ai)
+   - Sign up and create an API key
+   - Free credits available for testing
+
+2. **Add credentials to `.env.local`**
+
+   ```env
+   OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxx
+   OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+   DEFAULT_AI_MODEL=deepseek/deepseek-chat-v3.1:free
+   ```
+
+3. **Choose your model**
+   - Free models: `deepseek/deepseek-chat-v3.1:free`, `meta-llama/llama-2-70b-chat`
+   - Premium models: `gpt-4`, `claude-3-opus`, `gemini-pro`
+   - See [OpenRouter models](https://openrouter.ai/models) for full list
+
+### Available AI Endpoints
+
+#### 1. Repository Analysis
 
 ```bash
 curl -X POST http://localhost:3000/api/enrichment \
   -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-prod-xxxxx" \
   -d '{
     "owner": "facebook",
     "name": "react",
     "scope": "repo",
     "task": "analyze",
-    "question": "What is the overall code quality?"
+    "question": "What is the overall code quality and architecture?"
   }'
 ```
 
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "repository": {
+      "name": "react",
+      "url": "https://github.com/facebook/react",
+      "stars": 220000,
+      "language": "JavaScript"
+    },
+    "analysis": "React is a well-architected JavaScript library with excellent code organization..."
+  }
+}
+```
+
+#### 2. Issue Summarization
+
+```bash
+curl -X POST http://localhost:3000/api/enrichment \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-prod-xxxxx" \
+  -d '{
+    "owner": "facebook",
+    "name": "react",
+    "scope": "repo",
+    "task": "summarize-issues",
+    "question": "What are the main themes in recent issues?"
+  }'
+```
+
+#### 3. AI Chat Completion
+
+```bash
+curl -X POST http://localhost:3000/api/ai/llm \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: sk-prod-xxxxx" \
+  -d '{
+    "message": "Explain React hooks and their benefits",
+    "model": "gpt-4"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "React hooks are functions that let you use state and other React features...",
+    "model": "gpt-4"
+  },
+  "usage": {
+    "prompt_tokens": 12,
+    "completion_tokens": 145,
+    "total_tokens": 157
+  }
+}
+```
+
+### Configuration Examples
+
+#### Development Setup (Free Models)
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-xxxx
+DEFAULT_AI_MODEL=deepseek/deepseek-chat-v3.1:free
+MAX_TOKENS=500
+TEMPERATURE=0.7
+```
+
+#### Production Setup (Premium Models)
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-prod-xxxxx
+DEFAULT_AI_MODEL=gpt-4
+MAX_TOKENS=2000
+TEMPERATURE=0.5
+```
+
+#### Research/Experimental (Claude 3)
+
+```env
+OPENROUTER_API_KEY=sk-or-v1-xxxx
+DEFAULT_AI_MODEL=anthropic/claude-3-opus
+MAX_TOKENS=4000
+TEMPERATURE=0.8
+```
+
+### Cost Optimization Tips
+
+| Strategy            | Benefits          | Trade-offs               |
+| ------------------- | ----------------- | ------------------------ |
+| **Use Free Models** | No cost           | Slightly lower quality   |
+| **Batch Requests**  | Fewer API calls   | Slightly delayed results |
+| **Cache Results**   | Reduced API calls | Stale data risk          |
+| **Limit Tokens**    | Lower cost        | Truncated responses      |
+| **Temperature=0.5** | Consistency       | Less creativity          |
+
+### Troubleshooting
+
+**Issue: 503 Service Unavailable**
+
+- OpenRouter API key not configured
+- Solution: Check OPENROUTER_API_KEY in .env.local
+
+**Issue: Rate Limited**
+
+- Too many requests to OpenRouter
+- Solution: Reduce request frequency or upgrade plan
+
+**Issue: Token Limit Exceeded**
+
+- Response too long for configured MAX_TOKENS
+- Solution: Increase MAX_TOKENS or ask shorter questions
+
 **📖 See [API_GUIDE.md](./docs/API_GUIDE.md#4-repository-enrichment-primary-endpoint) for complete examples**
+
+**📖 See [QUICK_START.md](./docs/QUICK_START.md) for setup guide**
+
+## ⚡ Rate Limiting & Performance
+
+### Overview
+
+Pulse Server implements a **two-tier rate limiting system** to protect your API and ensure fair usage:
+
+| Tier                | Type           | Limit        | Window     |
+| ------------------- | -------------- | ------------ | ---------- |
+| **Unauthenticated** | Per IP Address | 100 requests | 15 minutes |
+| **Authenticated**   | Per API Key    | 500 requests | 15 minutes |
+
+### Rate Limit Headers
+
+Every response includes rate limit information:
+
+```
+X-RateLimit-Limit: 500
+X-RateLimit-Remaining: 487
+X-RateLimit-Reset: 1699439400000
+```
+
+### Response Codes
+
+- **200 OK** - Request successful
+- **429 Too Many Requests** - Rate limit exceeded
+- **401 Unauthorized** - Missing or invalid API key
+- **403 Forbidden** - API key not authorized
+
+### Monitor Rate Limit Usage
+
+```javascript
+// JavaScript example
+const response = await fetch("/api/enrichment", {
+  headers: { "X-API-Key": "sk-prod-xxxxx" },
+});
+
+const remaining = response.headers.get("X-RateLimit-Remaining");
+const limit = response.headers.get("X-RateLimit-Limit");
+const reset = new Date(parseInt(response.headers.get("X-RateLimit-Reset")));
+
+console.log(`Requests: ${remaining}/${limit}`);
+console.log(`Reset at: ${reset.toLocaleString()}`);
+
+if (remaining < 50) {
+  console.warn("⚠️ Approaching rate limit!");
+}
+```
+
+### Handling Rate Limits
+
+```javascript
+async function callApiWithRetry(endpoint, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const response = await fetch(endpoint, {
+      headers: { "X-API-Key": "sk-prod-xxxxx" },
+    });
+
+    if (response.status === 429) {
+      const reset = parseInt(response.headers.get("X-RateLimit-Reset"));
+      const delayMs = reset - Date.now();
+
+      if (attempt < maxRetries) {
+        console.log(`Rate limited. Retrying in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+    }
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }
+}
+```
+
+### Performance Tips
+
+| Optimization         | Impact              | Implementation           |
+| -------------------- | ------------------- | ------------------------ |
+| **Use API Keys**     | 5x higher limit     | Always authenticate      |
+| **Batch Requests**   | Fewer API calls     | Group related operations |
+| **Cache Results**    | Eliminate calls     | Store analysis results   |
+| **Reduce Frequency** | Better distribution | Implement backoff        |
+| **Connection Reuse** | Lower overhead      | Use keep-alive           |
+
+### Configuration
+
+Customize rate limiting in `config/index.js`:
+
+```javascript
+rateLimit: {
+  windowMs: 15 * 60 * 1000,      // 15 minutes
+  max: 100,                        // per IP
+  maxPerApiKey: 500,               // per authenticated key
+}
+```
+
+### Monitoring
+
+Enable logging to track rate limit events:
+
+```env
+LOG_LEVEL=info
+```
+
+Check logs for:
+
+- `Rate limit exceeded` - Too many requests from IP/key
+- `API Key authenticated` - Successful API key validation
+- `Invalid API key` - Failed authentication
+
+**📖 See [SECURITY.md](./docs/SECURITY.md#rate-limiting) for detailed rate limiting guide**
 
 ## 🧪 Testing
 
-Run the test suite:
+### Run Test Suite
 
 ```bash
 npm test
 ```
 
+### Test Coverage
+
 The project includes comprehensive tests for:
 
-- Server startup and health checks
-- API endpoint responses
-- Error handling
-- Route availability
+- ✅ Server startup and health checks
+- ✅ API endpoint responses
+- ✅ API key authentication (401/403 responses)
+- ✅ Rate limiting enforcement
+- ✅ Error handling
+- ✅ Route availability
+- ✅ CORS configuration
+- ✅ Security headers
+
+### Test Results
+
+```
+  Server
+    ✓ GET / should return welcome message (35 ms)
+    ✓ GET /health should return health status (8 ms)
+    ✓ GET /api should return API info (6 ms)
+    ✓ GET /api/ai/models should return AI models info (605 ms)
+    ✓ POST /api/ai/llm should work with valid message (1611 ms)
+    ✓ POST /api/ai/llm should return error when message is missing (6 ms)
+    ✓ POST /api/ai/llm should handle invalid model gracefully (165 ms)
+    ✓ GET /nonexistent should return 404 (5 ms)
+    ✓ Server should handle CORS properly (5 ms)
+    ✓ Server should have security headers (7 ms)
+    ✓ GET /api/github/status should return GitHub service status (7 ms)
+
+Test Suites: 1 passed, 1 total
+Tests: 11 passed, 11 total
+```
+
+### Custom Testing
+
+```bash
+# Test specific endpoint
+curl -H "X-API-Key: sk-dev-abc123" http://localhost:3000/api/enrichment
+
+# Check rate limit headers
+curl -I -H "X-API-Key: sk-dev-abc123" http://localhost:3000/api/enrichment
+
+# Test without API key (should fail with 401)
+curl http://localhost:3000/api/enrichment
+```
+
+### Debug Testing
+
+```bash
+# Run tests with verbose output
+npm test -- --verbose
+
+# Run specific test file
+npm test -- server.test.js
+
+# Watch mode for development
+npm test -- --watch
+
+# Generate coverage report
+npm test -- --coverage
+```
 
 ## 🛡️ Security Features
 
@@ -351,27 +774,229 @@ The project includes comprehensive tests for:
 
 ### Production Checklist
 
-- [ ] Set `NODE_ENV=production`
-- [ ] Configure production database
-- [ ] Set up process manager (PM2)
-- [ ] Configure reverse proxy (Nginx)
-- [ ] Set up SSL certificates
-- [ ] Configure logging
-- [ ] Set up monitoring
+Before deploying to production, ensure:
+
+**Security:**
+
+- [ ] API_KEY_AUTH_ENABLED=true
+- [ ] Generate new production API keys (not from development)
+- [ ] Store API keys securely (environment variables, secrets manager)
+- [ ] HTTPS enabled and HTTP redirects to HTTPS
+- [ ] CORS_ORIGIN restricted to your domain(s)
+- [ ] Error messages don't leak sensitive information
+
+**Configuration:**
+
+- [ ] NODE_ENV=production
+- [ ] NODE_ENV set via environment variable (not .env file)
+- [ ] All required environment variables configured
+- [ ] Database connections tested
+- [ ] External API keys configured (GitHub, OpenRouter)
+
+**Infrastructure:**
+
+- [ ] Process manager (PM2, systemd) configured
+- [ ] Reverse proxy (Nginx, Apache) configured
+- [ ] SSL certificates installed
+- [ ] Firewall rules configured
+- [ ] Logging and monitoring configured
+- [ ] Backup and disaster recovery plan
+
+**Monitoring:**
+
+- [ ] Error logging enabled
+- [ ] Request logging enabled
+- [ ] Rate limit monitoring
+- [ ] API key usage tracking
+- [ ] Alerts configured for failures
+
+**Performance:**
+
+- [ ] Set up caching (Redis if needed)
+- [ ] Enable gzip compression
+- [ ] Configure connection pooling
+- [ ] Load testing completed
+- [ ] Response times acceptable
+
+### Environment Setup
+
+**Local Development:**
+
+```bash
+npm install
+npm run dev
+```
+
+**Staging Environment:**
+
+```env
+NODE_ENV=staging
+API_KEY_AUTH_ENABLED=true
+API_KEYS=sk-staging-xxxxx,sk-staging-yyyyy
+```
+
+**Production Environment:**
+
+```env
+NODE_ENV=production
+API_KEY_AUTH_ENABLED=true
+API_KEYS=sk-prod-xxxxx,sk-prod-yyyyy,sk-prod-zzzzz
+CORS_ORIGIN=https://yourdomain.com
+```
 
 ### Docker Deployment
 
-Create a `Dockerfile`:
+#### Basic Dockerfile
 
 ```dockerfile
 FROM node:18-alpine
+
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
+
+# Install production dependencies only
 RUN npm ci --only=production
+
+# Copy application files
 COPY . .
+
+# Expose port
 EXPOSE 3000
+
+# Start server
 CMD ["npm", "start"]
 ```
+
+#### Docker Compose Example
+
+```yaml
+version: "3.8"
+
+services:
+  pulse-server:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - API_KEY_AUTH_ENABLED=true
+      - API_KEYS=${API_KEYS}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+```
+
+#### Build and Run
+
+```bash
+# Build image
+docker build -t pulse-server:latest .
+
+# Run container
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e API_KEYS=sk-prod-xxxxx \
+  -e GITHUB_TOKEN=xxx \
+  -e OPENROUTER_API_KEY=xxx \
+  pulse-server:latest
+
+# Using Docker Compose
+docker-compose up -d
+```
+
+### Deployment Platforms
+
+**Heroku:**
+
+```bash
+heroku create pulse-server
+heroku config:set NODE_ENV=production
+heroku config:set API_KEYS=sk-prod-xxxxx
+git push heroku main
+```
+
+**AWS Lambda/Serverless:**
+
+```bash
+serverless deploy function --function api
+```
+
+**DigitalOcean/VPS:**
+
+```bash
+# SSH into server
+ssh user@server
+
+# Clone repository
+git clone <repo>
+cd pulse-server
+
+# Install PM2 globally
+npm install -g pm2
+
+# Start with PM2
+pm2 start npm --name "pulse-server" -- start
+pm2 save
+```
+
+**Vercel (Node.js API):**
+
+```bash
+vercel deploy
+```
+
+### Monitoring & Logging
+
+**Enable logging:**
+
+```env
+LOG_LEVEL=info
+```
+
+**Log files to check:**
+
+- Application logs: `npm start` output
+- Access logs: Morgan HTTP request logs
+- Error logs: Check system error output
+- Rate limit events: Search for "429" status codes
+
+**Monitoring solutions:**
+
+- DataDog
+- New Relic
+- Sentry (error tracking)
+- PM2 Plus (process monitoring)
+- ELK Stack (logging)
+
+### Scaling Considerations
+
+**Horizontal Scaling:**
+
+- Load balance across multiple instances
+- Share rate limit counters (Redis)
+- Use centralized logging
+
+**Vertical Scaling:**
+
+- Increase server resources
+- Optimize database queries
+- Cache frequently accessed data
+
+**Performance Optimization:**
+
+- Enable gzip compression
+- Set appropriate cache headers
+- Use CDN for static assets
+- Monitor and optimize slow endpoints
+
+**📖 See [QUICK_START.md](./docs/QUICK_START.md) for deployment examples**
+
+**📖 See [SECURITY.md](./docs/SECURITY.md) for security deployment guide**
 
 ## 🤝 Contributing
 
