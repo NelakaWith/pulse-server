@@ -16,8 +16,10 @@ steps:
 
   - name: run-tests
     image: node:20-alpine
+    environment:
+      NODE_ENV: test
     commands:
-      - npm test
+      - npm run test:ci
 
   - name: lint-commits
     image: node:20-alpine
@@ -69,8 +71,10 @@ steps:
 
   - name: run-tests
     image: node:20-alpine
+    environment:
+      NODE_ENV: test
     commands:
-      - npm test
+      - npm run test:ci
 
   - name: build-and-copy
     image: alpine:latest
