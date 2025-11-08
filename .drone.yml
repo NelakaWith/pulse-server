@@ -67,6 +67,35 @@ steps:
     commands:
       - npx commitlint --from HEAD~1 --to HEAD --verbose
 
+  - name: test-server-connectivity
+    image: alpine:latest
+    commands:
+      - apk add --no-cache openssh-client curl netcat-openbsd
+      - echo "========================================"
+      - echo "🔌 Testing SSH connection to deployment server"
+      - echo "========================================"
+      - echo "Target:" $DEPLOY_HOST":22"
+      - echo "User:" $DROPLET_USER
+      - nc -zv $DEPLOY_HOST 22 && echo "Port 22 is reachable" || echo "Connection to port 22 FAILED"
+      - echo ""
+      - echo "Testing SSH authentication..."
+      - mkdir -p ~/.ssh
+      - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+      - chmod 600 ~/.ssh/id_ed25519
+      - ssh-keyscan -t ed25519 $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+      - ssh -v -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 $DROPLET_USER@$DEPLOY_HOST "echo SSH connection successful" || echo "SSH connection FAILED"
+      - echo ""
+      - echo "Drone runner public IP:"
+      - wget -qO- ifconfig.me || curl -s ifconfig.me
+      - echo "========================================"
+    environment:
+      DEPLOY_HOST:
+        from_secret: DEPLOY_HOST
+      DROPLET_USER:
+        from_secret: DROPLET_USER
+      SSH_PRIVATE_KEY:
+        from_secret: SSH_PRIVATE_KEY
+
   - name: build-dry-run
     image: alpine:latest
     commands:
@@ -163,13 +192,25 @@ steps:
       - name: deploy
         path: /tmp/deploy
 
+  - name: test-connectivity
+    image: alpine:latest
+    commands:
+      - apk add --no-cache netcat-openbsd curl
+      - echo "Testing connection to $DEPLOY_HOST:22"
+      - nc -zv $DEPLOY_HOST 22 || echo "Connection to port 22 FAILED"
+      - echo "Drone runner public IP:"
+      - wget -qO- ifconfig.me || curl -s ifconfig.me
+    environment:
+      DEPLOY_HOST:
+        from_secret: DEPLOY_HOST
+
   - name: copy-to-server
     image: appleboy/drone-scp
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -192,9 +233,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -206,9 +247,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -220,9 +261,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -235,9 +276,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -303,7 +344,7 @@ steps:
     image: plugins/github-release
     settings:
       api_key:
-        from_secret: github_token
+        from_secret: GITHUB_API_TOKEN
       title: "Release ${DRONE_TAG}"
       note: CHANGELOG.md
       files:
