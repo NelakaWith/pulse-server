@@ -167,9 +167,9 @@ steps:
     image: appleboy/drone-scp
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -192,9 +192,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -206,9 +206,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -220,9 +220,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -235,9 +235,9 @@ steps:
     image: appleboy/drone-ssh
     settings:
       host:
-        from_secret: deploy_host
+        from_secret: DEPLOY_HOST
       username:
-        from_secret: deploy_username
+        from_secret: DROPLET_USER
       key:
         from_secret: SSH_PRIVATE_KEY
       port: 22
@@ -303,7 +303,7 @@ steps:
     image: plugins/github-release
     settings:
       api_key:
-        from_secret: github_token
+        from_secret: GITHUB_API_TOKEN
       title: "Release ${DRONE_TAG}"
       note: CHANGELOG.md
       files:
