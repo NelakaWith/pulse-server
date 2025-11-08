@@ -1000,7 +1000,104 @@ LOG_LEVEL=info
 
 **📖 See [SECURITY.md](./docs/SECURITY.md) for security deployment guide**
 
-## 📦 Releases & Versioning with Conventional Commits
+## � CI/CD Pipeline with Drone CI
+
+This project uses **Drone CI** for automated testing, building, and deployment with a **build-and-copy** approach and **PM2** process management.
+
+### Pipeline Overview
+
+| Event            | Pipeline       | Actions                                   |
+| ---------------- | -------------- | ----------------------------------------- |
+| **PR Created**   | Test + PR Lint | Run tests, validate conventional commits  |
+| **PR Merged**    | Auto-Release   | Create version, update CHANGELOG          |
+| **Tag Pushed**   | Deploy         | Build, copy, deploy to production via PM2 |
+| **Main Updated** | Build & Deploy | Full deployment pipeline                  |
+
+### Quick CI/CD Setup
+
+```bash
+# 1. Make changes and commit (conventional format)
+npm run commit
+
+# 2. Push and create PR
+git push origin feat/new-feature
+
+# 3. CI automatically:
+#    - Validates commit format
+#    - Runs all tests
+#    - Lints PR title
+
+# 4. After PR merge to main:
+#    - Auto-creates release (v1.1.0)
+#    - Builds application
+#    - Deploys to production via PM2
+#    - Sends success notification
+```
+
+### Deployment Architecture
+
+```
+GitHub Push → Drone CI → Build & Test → Deploy to Server
+                                ↓
+                         Copy files via SCP
+                                ↓
+                         Install dependencies
+                                ↓
+                      PM2 reload (zero-downtime)
+                                ↓
+                         Health checks
+                                ↓
+                    Telegram notification
+```
+
+### Required Secrets
+
+Configure in Drone CI settings:
+
+```
+deploy_host         # Server hostname
+deploy_username     # SSH username
+deploy_ssh_key      # SSH private key
+github_token        # GitHub token
+telegram_token      # Telegram bot token
+telegram_chat_id    # Telegram chat ID
+```
+
+### PM2 Process Management
+
+**Configuration:** `ecosystem.config.js`
+
+```bash
+# Start application
+pm2 start ecosystem.config.js --env production
+
+# Zero-downtime reload
+pm2 reload ecosystem.config.js --env production
+
+# View logs
+pm2 logs pulse-server
+
+# Monitor status
+pm2 monit
+
+# Save configuration
+pm2 save
+```
+
+**Features:**
+
+- ✅ Cluster mode with 2 instances
+- ✅ Auto-restart on failure
+- ✅ Health checks every 30 seconds
+- ✅ Graceful shutdown
+- ✅ Memory limit: 500MB
+- ✅ JSON logging
+
+**📖 See [CI_CD_PIPELINE.md](./docs/CI_CD_PIPELINE.md) for complete CI/CD documentation**
+
+---
+
+## �📦 Releases & Versioning with Conventional Commits
 
 This project follows **Semantic Versioning** (MAJOR.MINOR.PATCH) with **Conventional Commits** for automatic version determination.
 
