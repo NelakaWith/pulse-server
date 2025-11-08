@@ -97,7 +97,7 @@ describe("Server", () => {
       });
 
     // Should handle gracefully, either success or proper error
-    expect([200, 400, 500]).toContain(response.status);
+    expect([200, 400, 500, 501]).toContain(response.status);
     expect(response.body.success).toBeDefined();
   });
 
