@@ -6,7 +6,7 @@ let app;
 let server;
 const TEST_API_KEY = "pulse-dev-key-123"; // Test API key from .env.local
 
-beforeEach(async () => {
+beforeAll(async () => {
   app = await createApp();
   server = app.listen();
 });
@@ -139,9 +139,13 @@ describe("Server", () => {
   });
 });
 
-afterEach(async () => {
+afterAll(async () => {
+  // Close server and cleanup
   if (server) {
     await new Promise((resolve) => server.close(resolve));
   }
   cleanupAllRateLimits();
+
+  // Give a moment for cleanup to complete
+  await new Promise((resolve) => setTimeout(resolve, 100));
 });
