@@ -25,11 +25,14 @@ export function generateApiKey(environment = "dev") {
  *
  * @example
  * generateApiKeys(3, 'prod')
- * // [
- * //   'sk-prod-00000000000000000000000000000000',
- * //   'sk-prod-00000000000000000000000000000001',
- * //   'sk-prod-00000000000000000000000000000002'
- * // ]
+ * Generates an array of API keys with the format:
+ * 'sk-{environment}-{randomHex}'
+ * Example:
+ * [
+ *   'sk-prod-<randomHex>',
+ *   'sk-prod-<randomHex>',
+ *   'sk-prod-<randomHex>'
+ *  ]
  */
 export function generateApiKeys(count = 1, environment = "dev") {
   return Array.from({ length: count }, () => generateApiKey(environment));
