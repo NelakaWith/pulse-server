@@ -1,4 +1,3 @@
-````markdown
 # 📋 Conventional Commits Guide
 
 Pulse Server uses **Conventional Commits** to standardize commit messages and enable automatic semantic versioning.
@@ -411,4 +410,3 @@ revert: revert "feat(api): add webhook support"
 ---
 
 **With Conventional Commits, your version history is automatic and clear!** 🚀
-````
