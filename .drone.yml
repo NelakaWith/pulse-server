@@ -229,8 +229,17 @@ steps:
       - npm ci --loglevel=info
       - echo "✅ Dependencies installed successfully"
 
+  - name: install-test-deps
+    image: node:20-alpine
+    commands:
+      - echo "Installing test dependencies..."
+      - npm ci --loglevel=info
+      - echo "✅ Test dependencies installed"
+
   - name: run-tests
     image: node:20-alpine
+    depends_on:
+      - install-test-deps
     environment:
       NODE_ENV: test
       # Disable API key auth in tests (tests expect auth to be disabled)
@@ -310,7 +319,15 @@ steps:
       - chmod 600 ~/.ssh/id_rsa
       - ssh-keyscan -H "$${DEPLOY_HOST}" >> ~/.ssh/known_hosts
       - echo "Copying files to server..."
-      - rsync -avz --rsync-path="sudo rsync" -e "ssh -i ~/.ssh/id_rsa" server.js package.json package-lock.json .env.production ecosystem.config.js routes/ middleware/ services/ utils/ $${DROPLET_USER}@$${DEPLOY_HOST}:/var/www/pulse-server/
+      - |
+        # Use rsync from /tmp/deploy volume
+        rsync -avz \
+          --rsync-path="sudo rsync" \
+          -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+          /tmp/deploy/ \
+          $${DROPLET_USER}@$${DEPLOY_HOST}:/var/www/pulse-server/ || true
+        # Verify key files were copied
+        ssh -i ~/.ssh/id_rsa $${DROPLET_USER}@$${DEPLOY_HOST} "ls -lh /var/www/pulse-server/{server.js,package.json,ecosystem.config.js}"
 
   - name: install-production-deps
     image: alpine:latest
@@ -445,18 +462,39 @@ trigger:
 
 steps:
   - name: create-github-release
-    image: plugins/github-release
-    settings:
-      api_key:
+    image: node:20-alpine
+    environment:
+      GITHUB_API_TOKEN:
         from_secret: GITHUB_API_TOKEN
-      title: "Release ${DRONE_TAG}"
-      note: CHANGELOG.md
-      files:
-        - package.json
-        - CHANGELOG.md
-    when:
-      event:
-        - tag
+    commands:
+      - apk add --no-cache git curl jq
+      - |
+        # Extract version from tag
+        VERSION="${DRONE_TAG}"
+        echo "Creating GitHub release for $VERSION"
+
+        # Get changelog entry for this version
+        CHANGELOG_CONTENT=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | head -n -1)
+
+        # If no changelog found, use commit message
+        if [ -z "$CHANGELOG_CONTENT" ]; then
+          CHANGELOG_CONTENT="Release $VERSION - See commit ${DRONE_COMMIT_SHA:0:8}"
+        fi
+
+        # Create release via GitHub API
+        curl -X POST \
+          -H "Authorization: token $${GITHUB_API_TOKEN}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/NelakaWith/pulse-server/releases \
+          -d "{
+            \"tag_name\": \"$VERSION\",
+            \"name\": \"$VERSION\",
+            \"body\": $(echo "$CHANGELOG_CONTENT" | jq -R -s .),
+            \"draft\": false,
+            \"prerelease\": false
+          }" | jq '.'
+
+        echo "✅ GitHub release created successfully"
 
   - name: notify-release
     image: appleboy/drone-telegram
