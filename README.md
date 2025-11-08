@@ -2,7 +2,7 @@
 
 An AI-powered Express.js server designed for seamless integration with OpenRouter AI services. Built with modern Node.js practices and ready for production deployment.
 
-[![Build Status](https://drone.nelakawithanage.com/api/badges/NelakaWith/pulse-server/status.svg?branch=main)](https://drone.nelakawithanage.com/NelakaWith/pulse-server)
+[![Build Status](https://github.com/NelakaWith/pulse-server/actions/workflows/test-on-pr.yml/badge.svg?branch=main)](https://github.com/NelakaWith/pulse-server/actions)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org/)
 [![License: AGPL 3.0](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![ES6 Modules](https://img.shields.io/badge/ES6-Modules-yellow)](https://nodejs.org/api/esm.html)
@@ -25,9 +25,9 @@ An AI-powered Express.js server designed for seamless integration with OpenRoute
 
 ### Core Documentation
 
-- [🔄 CI/CD Pipeline](#-cicd-pipeline-with-drone-ci)
+- [🔄 CI/CD Pipeline](#-cicd-pipeline-with-github-actions)
   - 📚 [CI/CD Pipeline Guide](./docs/CI_CD_PIPELINE.md) - Complete architecture and features
-  - 🔧 [CI/CD Setup](./docs/CI_CD_SETUP.md) - Step-by-step configuration
+  - �️ [CI/CD Setup](./docs/CI_CD_SETUP.md) - Step-by-step configuration
   - 📋 [CI/CD Quick Reference](./docs/CI_CD_QUICK_REFERENCE.md) - Commands and troubleshooting
   - 🎨 [CI/CD Visual Workflow](./docs/CI_CD_VISUAL_WORKFLOW.md) - Pipeline diagrams and flows
 - [🔗 Key Endpoints](#-key-endpoints)
@@ -222,18 +222,18 @@ Start here! [**QUICK_START.md**](./docs/QUICK_START.md) covers:
 
 ```
 Frontend Application
-        ↓
+  ↓
 POST /api/enrichment
   {owner, name, scope, task}
-        ↓
+  ↓
 Backend Server
   ├─ Fetch GitHub data (GraphQL)
   ├─ Send to OpenRouter AI
   └─ Return enriched analysis
-        ↓
+  ↓
 Formatted JSON Response
   {success, data, metadata}
-        ↓
+  ↓
 Display Results to User
 ```
 
@@ -252,109 +252,110 @@ See [API_GUIDE.md](./docs/API_GUIDE.md#4-repository-enrichment-primary-endpoint)
 
 The frontend communicates with the backend using this unified contract:
 
-```javascript
-// Request
-POST /api/enrichment
-{
-  "owner": "username",
-  "name": "repo-name",
-  "scope": "repo",
-  "task": "analyze" | "summarize-issues",
-  "question": "optional custom question"
-}
+## 🛠️ CI/CD Pipeline with GitHub Actions
 
-// Response
-{
-  "success": true,
-  "data": {
-    "repository": { /* repo details */ },
-    "analysis": "AI-generated insights",
-    "metadata": { /* metadata */ }
-  }
-}
-```
+This project uses **GitHub Actions** for automated testing, linting, building, releasing, and deployment with a **build-and-copy** approach and **PM2** process management.
 
-- `npm start` - Start the production server
-- `npm run dev` - Start development server with auto-restart
-- `npm test` - Run test suite
+### Pipeline Overview
 
-## 📊 API Endpoints
+| Event            | Workflow File                     | Actions                                   |
+| ---------------- | --------------------------------- | ----------------------------------------- |
+| **PR Created**   | pr-lint.yml, test-on-pr.yml       | Run tests, validate conventional commits  |
+| **PR Merged**    | auto-release.yml                  | Create version, update CHANGELOG          |
+| **Tag Pushed**   | release.yml, build-and-deploy.yml | Build, copy, deploy to production via PM2 |
+| **Main Updated** | auto-release.yml                  | Full release pipeline                     |
 
-### Core Endpoints
-
-- **GET /** - Welcome message and server information
-- **GET /health** - Health check endpoint
-- **GET /api** - API information and available routes
-
-### Enrichment Endpoints (Main Feature)
-
-- **POST /api/enrichment** - Unified repository analysis endpoint
-  - Task: `analyze` - AI-powered repository analysis
-  - Task: `summarize-issues` - AI summary of repository issues
-
-### AI Endpoints
-
-- **POST /api/ai/llm** - AI chat/completion endpoint
-- **GET /ai/models** - List available AI models
-
-### GitHub Data Endpoints
-
-- **POST /api/github/repository** - Get raw GitHub repository data
-- Additional GitHub endpoints for issues, PRs, users, etc.
-
-**📖 For complete endpoint documentation, see [API_GUIDE.md](./docs/API_GUIDE.md)**
-
-## 🔒 API Key Management
-
-### Overview
-
-Pulse Server uses **API Key Authentication** to secure all `/api` endpoints. This ensures that only authorized clients can access your server's functionality.
-
-### Key Types
-
-1. **Development Keys** - For local testing and development
-2. **Staging Keys** - For pre-production environment
-3. **Production Keys** - For live deployment (must be securely generated)
-
-### Generating Production API Keys
-
-Use the built-in API key generator:
+### Quick CI/CD Setup
 
 ```bash
-# Generate 1 production key
-node utils/generateApiKey.js prod 1
+# 1. Make changes and commit (conventional format)
+npm run commit
 
-# Generate 3 production keys
-node utils/generateApiKey.js prod 3
+# 2. Push and create PR
+git push origin feat/new-feature
 
-# Generate 5 staging keys
-node utils/generateApiKey.js staging 5
+# 3. GitHub Actions automatically:
+#    - Validates commit format
+#    - Runs all tests
+#    - Lints PR title
+
+# 4. After PR merge to main:
+#    - Auto-creates release (v1.1.0)
+#    - Builds application
+#    - Deploys to production via PM2
+#    - Sends success notification
 ```
 
-**Output example:**
+### Deployment Architecture
 
 ```
-🔑 Generating 3 API key(s) for prod environment:
-
-1. sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61
-2. sk-prod-9eeb3cb562a4a9af2d03caf58c55c7aa9b0551e1430d4010
-3. sk-prod-46cd217ba5cc7773c36d5e8b667ba2567cbd635201dca541
+GitHub Push → GitHub Actions → Build & Test → Deploy to Server
+            ↓
+          Copy files via SSH/rsync
+            ↓
+          Install dependencies
+            ↓
+       PM2 reload (zero-downtime)
+            ↓
+          Health checks
+            ↓
+          Telegram notification
 ```
 
-### How to Use API Keys
+### Required Secrets
 
-#### Option 1: Header Method (Recommended)
+Configure in GitHub repository settings (Settings → Secrets and variables → Actions):
+
+```
+DEPLOY_HOST         # Server hostname
+DROPLET_USER        # SSH username
+SSH_PRIVATE_KEY     # SSH private key
+GITHUB_TOKEN        # GitHub token
+TELEGRAM_TOKEN      # Telegram bot token
+TELEGRAM_CHAT_ID    # Telegram chat ID
+```
+
+### PM2 Process Management
+
+**Configuration:** `ecosystem.config.js`
 
 ```bash
-curl -H "X-API-Key: sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61" \
-  http://localhost:3000/api/enrichment
+# Start application
+pm2 start ecosystem.config.js --env production
+
+# Zero-downtime reload
+pm2 reload ecosystem.config.js --env production
+
+# View logs
+pm2 logs pulse-server
+
+# Monitor status
+pm2 monit
+
+# Save configuration
+pm2 save
 ```
+
+**Features:**
+
+- ✅ Cluster mode with 2 instances
+- ✅ Auto-restart on failure
+- ✅ Health checks every 30 seconds
+- ✅ Graceful shutdown
+- ✅ Memory limit: 500MB
+- ✅ JSON logging
+
+**📚 See [CI_CD_PIPELINE.md](./docs/CI_CD_PIPELINE.md) for complete CI/CD documentation**
+
+---
+
+````
 
 #### Option 2: Query Parameter
 
 ```bash
 curl "http://localhost:3000/api/enrichment?api_key=sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61"
-```
+````
 
 ### Configuration
 
