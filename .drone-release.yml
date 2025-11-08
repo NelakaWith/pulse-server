@@ -40,7 +40,7 @@ steps:
   - name: create-release
     image: node:20-alpine
     environment:
-      GITHUB_TOKEN:
+      GITHUB_API_TOKEN:
         from_secret: github_token
     commands:
       - apk add --no-cache git

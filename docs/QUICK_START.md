@@ -23,7 +23,7 @@ NODE_ENV=development
 PORT=3000
 
 # GitHub Configuration
-GITHUB_TOKEN=your_github_pat_here
+GITHUB_API_TOKEN=your_github_pat_here
 GITHUB_GRAPHQL_API_BASE_URL=https://api.github.com/graphql
 
 # OpenRouter AI Configuration
@@ -235,7 +235,7 @@ LOG_LEVEL=debug
 
 **❌ Error: "GitHub token is not configured"**
 
-- Solution: Check `GITHUB_TOKEN` in `.env.local`
+- Solution: Check `GITHUB_API_TOKEN` in `.env.local`
 
 **❌ Error: "OpenRouter API key is not configured"**
 

@@ -34,7 +34,7 @@ steps:
       API_KEY_AUTH_ENABLED: "false"
       # Provide fallback values if secrets are not available
       OPENROUTER_API_KEY: "sk-or-test-key"
-      GITHUB_TOKEN: "ghp_test_token"
+      GITHUB_API_TOKEN: "ghp_test_token"
       # Force unbuffered output
       FORCE_COLOR: "1"
     commands:
@@ -110,7 +110,7 @@ steps:
       # Disable API key auth in tests (tests expect auth to be disabled)
       API_KEY_AUTH_ENABLED: "false"
       OPENROUTER_API_KEY: "sk-or-test-key"
-      GITHUB_TOKEN: "ghp_test_token"
+      GITHUB_API_TOKEN: "ghp_test_token"
       FORCE_COLOR: "1"
     commands:
       - echo "========================================"

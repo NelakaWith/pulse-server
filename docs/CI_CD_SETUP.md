@@ -89,7 +89,7 @@ API_KEY_AUTH_ENABLED=true
 API_KEYS=sk-prod-xxxxx,sk-prod-yyyyy
 
 # GitHub Configuration
-GITHUB_TOKEN=your_production_github_pat
+GITHUB_API_TOKEN=your_production_github_pat
 GITHUB_GRAPHQL_API_BASE_URL=https://api.github.com/graphql
 
 # OpenRouter AI
