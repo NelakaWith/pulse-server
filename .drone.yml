@@ -1,7 +1,7 @@
 ---
 kind: pipeline
 type: docker
-name: test
+name: test-on-PR
 
 # Run tests on PR creation
 trigger:
@@ -24,19 +24,42 @@ steps:
     commands:
       - npx commitlint --from HEAD~1 --to HEAD --verbose
 
+  - name: build-dry-run
+    image: alpine:latest
+    commands:
+      - echo "🧪 Testing build steps (dry-run)..."
+      # Test build and copy process
+      - mkdir -p /tmp/deploy-test
+      - cp -r . /tmp/deploy-test/
+      # Exclude dev files
+      - rm -rf /tmp/deploy-test/node_modules
+      - rm -rf /tmp/deploy-test/.git
+      - rm -rf /tmp/deploy-test/tests
+      # Verify required files exist
+      - echo "✅ Checking required files..."
+      - test -f /tmp/deploy-test/server.js && echo "✅ server.js found"
+      - test -f /tmp/deploy-test/package.json && echo "✅ package.json found"
+      - test -f /tmp/deploy-test/ecosystem.config.js && echo "✅ ecosystem.config.js found"
+      - test -d /tmp/deploy-test/routes && echo "✅ routes/ found"
+      - test -d /tmp/deploy-test/middleware && echo "✅ middleware/ found"
+      - test -d /tmp/deploy-test/services && echo "✅ services/ found"
+      - test -d /tmp/deploy-test/utils && echo "✅ utils/ found"
+      # Show what would be deployed
+      - echo "📦 Files to be deployed:"
+      - ls -lah /tmp/deploy-test/ | grep -E "^d|server.js|package|ecosystem"
+      - echo "🧪 Build dry-run complete!"
+
 ---
 kind: pipeline
 type: docker
 name: build-and-deploy
 
-# Run when PR merged to main or tag created
+# Run only when release tag is created (v*.*.*)
 trigger:
   event:
-    - push
     - tag
-  branch:
-    - main
-    - develop
+  ref:
+    - refs/tags/v*
 
 steps:
   - name: install-dependencies
@@ -89,12 +112,6 @@ steps:
       strip_components: 0
       overwrite: true
       rm: false
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: install-production-deps
     image: appleboy/drone-ssh
@@ -109,12 +126,6 @@ steps:
       script:
         - cd /var/www/pulse-server
         - npm ci --only=production
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: health-check-before-deploy
     image: appleboy/drone-ssh
@@ -129,12 +140,6 @@ steps:
       script:
         - echo "Checking server health..."
         - pm2 describe pulse-server || echo "App not running yet"
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: deploy-with-pm2
     image: appleboy/drone-ssh
@@ -150,12 +155,6 @@ steps:
         - cd /var/www/pulse-server
         - pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
         - pm2 save
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: health-check-after-deploy
     image: appleboy/drone-ssh
@@ -173,12 +172,6 @@ steps:
         - pm2 logs pulse-server --lines 20 --nostream
         # Check if app is responding
         - curl -f http://localhost:3000/health || exit 1
-    when:
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: notify-success
     image: appleboy/drone-telegram
@@ -198,11 +191,6 @@ steps:
     when:
       status:
         - success
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
   - name: notify-failure
     image: appleboy/drone-telegram
@@ -218,15 +206,6 @@ steps:
         Branch: {{ commit.branch }}
         Commit: {{ commit.sha }}
         Author: {{ commit.author }}
-        Message: {{ commit.message }}
-    when:
-      status:
-        - failure
-      branch:
-        - main
-      event:
-        - push
-        - tag
 
 volumes:
   - name: deploy
