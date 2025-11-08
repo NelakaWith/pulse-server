@@ -16,22 +16,31 @@ steps:
 
   - name: lint-pr-title
     image: node:20-alpine
+    depends_on:
+      - install-dependencies
     commands:
       - |
         echo "Validating PR title: ${DRONE_PULL_REQUEST_TITLE}"
-        echo "${DRONE_PULL_REQUEST_TITLE}" | npx commitlint --verbose
+        # Check if title follows conventional commits format
+        if echo "${DRONE_PULL_REQUEST_TITLE}" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert)(\(.+\))?!?:"; then
+          echo "✅ PR title follows conventional commits format"
+        else
+          echo "❌ PR title does not follow conventional commits format"
+          echo "Valid formats: feat(scope): description, fix: description, etc."
+          exit 1
+        fi
     when:
       event:
         - pull_request
 
   - name: lint-commits
     image: node:20-alpine
+    depends_on:
+      - install-dependencies
     commands:
       - |
         echo "Linting commits in PR..."
-        # Get all commits in the PR
         apk add --no-cache git
-        git fetch origin ${DRONE_COMMIT_BRANCH}
         git fetch origin ${DRONE_TARGET_BRANCH}
         # Lint each commit message
         npx commitlint --from origin/${DRONE_TARGET_BRANCH} --to HEAD --verbose
@@ -41,11 +50,17 @@ steps:
 
   - name: check-conventional-commits
     image: alpine:latest
+    depends_on:
+      - lint-commits
     commands:
       - |
-        echo "✅ All commits follow conventional commits format"
+        echo "========================================"
+        echo "✅ PR Validation Complete"
+        echo "========================================"
         echo "PR Title: ${DRONE_PULL_REQUEST_TITLE}"
+        echo "All commits follow conventional commits format"
         echo "Valid commit types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert"
+        echo "========================================"
     when:
       event:
         - pull_request
