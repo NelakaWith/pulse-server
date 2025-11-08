@@ -18,28 +18,28 @@ if [[ ! "$VERSION_TYPE" =~ ^(major|minor|patch|premajor|preminor|prepatch)$ ]]; 
 fi
 
 # Get current version
-CURRENT_VERSION=$(node -p "require('./package.json').version")
+CURRENT_VERSION=$(node -p "require('semver').clean(require('./package.json').version)")
 echo "📦 Current version: $CURRENT_VERSION"
 
-# Determine new version
+# Determine new version using semver
 case $VERSION_TYPE in
   major)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1) ".0.0"}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'major')")
     ;;
   minor)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1 "." ($2+1) ".0"}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'minor')")
     ;;
   patch)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1 "." $2 "." ($3+1)}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'patch')")
     ;;
   premajor)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print ($1+1) ".0.0-'$PRERELEASE_ID'.1"}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'premajor', '$PRERELEASE_ID')")
     ;;
   preminor)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1 "." ($2+1) ".0-'$PRERELEASE_ID'.1"}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'preminor', '$PRERELEASE_ID')")
     ;;
   prepatch)
-    NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. '{print $1 "." $2 "." ($3+1) "-'$PRERELEASE_ID'.1"}')
+    NEW_VERSION=$(node -p "require('semver').inc('$CURRENT_VERSION', 'prepatch', '$PRERELEASE_ID')")
     ;;
 esac
 
