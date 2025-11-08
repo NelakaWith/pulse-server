@@ -21,13 +21,15 @@ steps:
       # Mock API keys for testing
       API_KEY_AUTH_ENABLED: "true"
       API_KEYS: pulse-dev-key-123
-      # Use secrets if available, otherwise empty (tests should handle missing keys)
-      OPENROUTER_API_KEY:
-        from_secret: openrouter_api_key
-      GITHUB_TOKEN:
-        from_secret: github_token
+      # Provide fallback values if secrets are not available
+      OPENROUTER_API_KEY: "sk-or-test-key"
+      GITHUB_TOKEN: "ghp_test_token"
     commands:
+      - echo "Starting tests..."
+      - echo "Node version:" && node --version
+      - echo "NPM version:" && npm --version
       - npm run test:ci
+      - echo "Tests completed!"
 
   - name: lint-commits
     image: node:20-alpine
@@ -83,12 +85,14 @@ steps:
       NODE_ENV: test
       API_KEY_AUTH_ENABLED: "true"
       API_KEYS: pulse-dev-key-123
-      OPENROUTER_API_KEY:
-        from_secret: openrouter_api_key
-      GITHUB_TOKEN:
-        from_secret: github_token
+      OPENROUTER_API_KEY: "sk-or-test-key"
+      GITHUB_TOKEN: "ghp_test_token"
     commands:
+      - echo "Starting tests..."
+      - echo "Node version:" && node --version
+      - echo "NPM version:" && npm --version
       - npm run test:ci
+      - echo "Tests completed!"
 
   - name: build-and-copy
     image: alpine:latest
