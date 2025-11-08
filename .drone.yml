@@ -9,6 +9,16 @@ trigger:
     - pull_request
 
 steps:
+  - name: startup-check
+    image: alpine:3.19
+    commands:
+      - echo "========================================"
+      - echo "🚀 Pipeline started successfully!"
+      - echo "========================================"
+      - date
+      - echo "Alpine version:" && cat /etc/alpine-release
+      - echo "========================================"
+
   - name: install-dependencies
     image: node:20-alpine
     commands:
