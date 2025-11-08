@@ -1,0 +1,28 @@
+name: Test on PR
+on:
+    pull_request:
+        types: [opened, synchronize]
+jobs:
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Install dependencies
+              run: npm ci --loglevel=info
+            - name: Run tests
+              env:
+                  NODE_ENV: test
+                  API_KEY_AUTH_ENABLED: false
+                  DEFAULT_AI_MODEL: deepseek/deepseek-chat
+                  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+                  OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
+                  GITHUB_API_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
+                  GITHUB_REST_API_BASE_URL: ${{ secrets.GITHUB_REST_API_BASE_URL }}
+                  GITHUB_GRAPHQL_API_BASE_URL: ${{ secrets.GITHUB_GRAPHQL_API_BASE_URL }}
+                  FORCE_COLOR: 1
+              run: |
+                  node --version
+                  npm --version
+                  echo "Running tests..."
+                  node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors
