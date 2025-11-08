@@ -1,198 +1,50 @@
 # Changelog
 
-All notable changes to this project are documented here.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
+## 1.1.0 (2025-11-08)
 
-## [Unreleased]
+### Features
 
-### Planned Features
+- **api:** Add API key generation, validation, and hashing utilities with comprehensive documentation ([05c650e](https://github.com/NelakaWith/pulse-server/commit/05c650ebbf89bef30e41d898ddcc64ced101f16e))
+- **app:** Initialize Pulse Server with Express.js and OpenRouter integration placeholders ([2fbebaa](https://github.com/NelakaWith/pulse-server/commit/2fbebaa716d166307db0e02064536a492f1edc2c))
+- **ci:** add CI pipelines for PR linting, automated releases, and deployment processes ([e9081fe](https://github.com/NelakaWith/pulse-server/commit/e9081fe87eafed4c0e8bf9d2e4ca258a7d49fd1b))
+- **ci:** enhance CI pipeline with dry-run build step and file verification ([0f75179](https://github.com/NelakaWith/pulse-server/commit/0f75179477bb70704db4d980f72bda8849d05a1c))
+- **config:** Update default AI model to an empty string for improved flexibility ([666c343](https://github.com/NelakaWith/pulse-server/commit/666c343e7586b7ff35a978387e9ffe66594ff5c2))
+- **docs:** add CI/CD quick reference, setup guide, and visual workflow documentation ([156dd90](https://github.com/NelakaWith/pulse-server/commit/156dd90da06eb92b1153e1d83d4b013c1fd7e0fe))
+- **docs:** Add initial README and environment configuration example ([df285b4](https://github.com/NelakaWith/pulse-server/commit/df285b4ab44d38cc5deb07fd58606dc8fbb5ae11))
+- **docs:** Add purpose document outlining OpenRouter AI integration benefits for Pulse-Ops ([5af9ef3](https://github.com/NelakaWith/pulse-server/commit/5af9ef31ae830f5c0d4e70eaea41a17a9f5114dd))
+- **docs:** enhance README with additional guides and references for CI/CD and project setup ([d9a8a60](https://github.com/NelakaWith/pulse-server/commit/d9a8a60eae02d129c3ebb95ecf70e3cb28b5a120))
+- **docs:** update README with additional badges for build status, Node.js version, license, and testing ([0de7c58](https://github.com/NelakaWith/pulse-server/commit/0de7c58b209a0edb708b71d77ffb64414c8a3a01))
+- **docs:** update README with structured table of contents for improved navigation ([8f44cf5](https://github.com/NelakaWith/pulse-server/commit/8f44cf5d48d3163df0680f7339921896ec946b8a))
+- **enrichment:** Add enrichment routes for AI analysis and issue summarization ([d812d18](https://github.com/NelakaWith/pulse-server/commit/d812d186d6f32221486512f1fb48d9e080a92597))
+- **enrichment:** Implement unified endpoint for repository enrichment tasks with enhanced validation and default analysis question ([8f7d33d](https://github.com/NelakaWith/pulse-server/commit/8f7d33d7367cc5717ac17cf4c3b5cdeb1c7b04be))
+- **github:** Integrate GitHub API with new routes and service for repository management ([f655a66](https://github.com/NelakaWith/pulse-server/commit/f655a66c8b33a14a1140cd48656b2e7141e36115))
+- **logging:** Enhance logging with Logger utility across services and routes ([499f785](https://github.com/NelakaWith/pulse-server/commit/499f785a481d7fc50277ae3d4bacb796a58cb54a))
+- **modules:** Implement OpenRouter AI integration with environment configuration and modular architecture ([bec0410](https://github.com/NelakaWith/pulse-server/commit/bec041088cc607506b7300a599a7fa11cb328e82))
+- **pipeline:** add startup check step with version info and timestamp ([514037a](https://github.com/NelakaWith/pulse-server/commit/514037ad9f0c2ae70ad9886126760ef408035fa2))
+- **release:** add release scripts and versioning tools ([e509f8c](https://github.com/NelakaWith/pulse-server/commit/e509f8cdf149c243a84582a0c4859288324d0982))
+- **security:** Implement API key authentication and rate limiting with comprehensive documentation updates ([0b173fe](https://github.com/NelakaWith/pulse-server/commit/0b173fe2ac677eaa8bbc33408aff3063e4ce56bb))
+- **service:** add logging for successful OpenRouter API calls ([328c4fa](https://github.com/NelakaWith/pulse-server/commit/328c4fae2811248d1b67e4639e641ab0bcb04056))
+- **tests:** Add API endpoint and connection tests for improved reliability ([19a8130](https://github.com/NelakaWith/pulse-server/commit/19a81306f292ef2f6d3b233a6aa35e2056194252))
+- **tests:** Add API endpoint tests and connection validation for OpenRouter integration ([b9d6224](https://github.com/NelakaWith/pulse-server/commit/b9d6224ba99a0bec38e5c535b6a1e388f3dbe291))
+- **tests:** add HTTP/HTTPS agents with keep-alive configuration to OpenRouterService ([dc520f4](https://github.com/NelakaWith/pulse-server/commit/dc520f40192015800546d14665ac07c41a6d806b))
+- **tests:** Enhance API tests with API key authentication and rate limiting checks ([6bbf927](https://github.com/NelakaWith/pulse-server/commit/6bbf927d1ba96b7d4525f53de45b9382a62279c2))
+- **tests:** enhance test commands with detailed logging and environment checks ([dcf811e](https://github.com/NelakaWith/pulse-server/commit/dcf811ee9b66c47c44030561c3a7bb731f4a1615))
+- **tests:** enhance test configuration with API key management and update test command ([3dd6f59](https://github.com/NelakaWith/pulse-server/commit/3dd6f5982e1c6906266bc3de67382b4079ca0957))
+- **tests:** update test configuration with fallback API keys and improved logging ([9451b90](https://github.com/NelakaWith/pulse-server/commit/9451b909e4b9e77c6ceabb8c6f3bbd5452ca1c11))
 
-- JWT token authentication alongside API keys
-- Webhook support for async operations
-- AI image vision endpoint
-- Advanced rate limiting analytics
-- Database persistence layer
+### Bug Fixes
 
-## [1.0.0] - 2025-11-08
-
-### Initial Release
-
-#### Added
-
-- **Express.js Server** - Fast, unopinionated Node.js framework
-- **API Key Authentication** - Secure endpoints with API key validation
-- **Rate Limiting** - Two-tier rate limiting (100/IP, 500/API key per 15 min)
-- **OpenRouter Integration** - Access to 50+ AI models (GPT-4, Claude, Llama, etc.)
-- **Repository Analysis** - AI-powered GitHub repository analysis
-- **Issue Summarization** - Automatic summarization of repository issues
-- **GitHub Integration** - GraphQL API integration for repository data
-- **Security Headers** - Helmet.js for security headers (CSP, X-Frame-Options, etc.)
-- **CORS Support** - Configurable Cross-Origin Resource Sharing
-- **Request Logging** - Morgan middleware for HTTP request logging
-- **Configuration Management** - Environment-based configuration
-- **Error Handling** - Comprehensive error middleware and handling
-- **Testing Suite** - Jest with 11 comprehensive tests
-- **Docker Support** - Dockerfile and Docker Compose examples
-- **Development Tools** - Nodemon for auto-restart during development
-
-#### Features
-
-**Core Endpoints:**
-
-- `GET /` - Welcome message and server info
-- `GET /health` - Health check endpoint
-- `GET /api` - API information and available routes
-
-**Enrichment Endpoints:**
-
-- `POST /api/enrichment` - Unified repository analysis endpoint
-  - Task: `analyze` - AI-powered repository analysis
-  - Task: `summarize-issues` - AI summary of issues
-
-**AI Endpoints:**
-
-- `POST /api/ai/llm` - AI chat/completion endpoint
-- `GET /api/ai/models` - List available AI models
-
-**GitHub Endpoints:**
-
-- `GET /api/github/status` - GitHub service status
-- `POST /api/github/repository` - Get raw GitHub repository data
-
-**Authentication:**
-
-- API Key in header: `X-API-Key: sk-prod-xxxxx`
-- API Key in query: `?api_key=sk-prod-xxxxx`
-
-**Rate Limiting:**
-
-- 100 requests per 15 minutes per IP (unauthenticated)
-- 500 requests per 15 minutes per API key (authenticated)
-- Response headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
-
-#### Documentation
-
-- QUICK_START.md - Getting started guide
-- API_GUIDE.md - Complete API reference
-- SECURITY.md - Security configuration and best practices
-- FRONTEND_INTEGRATION.md - Framework examples (React, Vue, Angular, Svelte)
-- API_KEY_QUICK_REFERENCE.md - One-page cheat sheet
-- API_KEY_MANAGEMENT.md - API key generation and management
-- PURPOSE.md - Project vision and goals
-
-#### Supported AI Models
-
-- OpenAI: GPT-4, GPT-3.5, GPT-4 Vision
-- Anthropic: Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
-- Google: Gemini Pro, Gemini 1.5
-- Meta: Llama 2 70B, Llama 3 70B
-- DeepSeek: DeepSeek Chat v3.1
-- And 40+ more models
-
-#### Environment Variables
-
-```
-NODE_ENV=development|production|test
-PORT=3000
-API_KEY_AUTH_ENABLED=true
-API_KEYS=comma,separated,keys
-GITHUB_API_TOKEN=github_pat_xxxxx
-OPENROUTER_API_KEY=sk-or-v1-xxxxx
-DEFAULT_AI_MODEL=deepseek/deepseek-chat-v3.1:free
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-CORS_ORIGIN=http://localhost:3000,https://yourdomain.com
-LOG_LEVEL=info|debug|warn|error
-```
-
-#### Dependencies
-
-- express: ^4.18.2
-- helmet: ^7.1.0
-- cors: ^2.8.5
-- dotenv: ^16.3.1
-- morgan: ^1.10.0
-- axios: ^1.6.0
-- graphql-request: ^7.3.1
-
-#### Dev Dependencies
-
-- jest: ^29.7.0
-- nodemon: ^3.0.1
-- supertest: ^6.3.3
-
-#### Tests
-
-- 11 comprehensive tests covering:
-  - Server startup and health checks
-  - API endpoint responses
-  - API key authentication (401/403)
-  - Rate limiting enforcement
-  - Error handling
-  - Route availability
-  - CORS configuration
-  - Security headers
-
-#### Known Limitations
-
-- No database persistence (in-memory operations only)
-- Rate limiting stored in memory (resets on server restart)
-- No horizontal scaling support yet
-- No webhook support
-- No async job queue
-
-#### Security
-
-- ✅ API Key authentication
-- ✅ Rate limiting per IP/key
-- ✅ Helmet.js security headers
-- ✅ CORS configuration
-- ✅ Request validation
-- ✅ Error message sanitization
-- ✅ Request logging
-- ⚠️ No JWT support yet (planned for v2.0.0)
-- ⚠️ No database encryption yet
-
-#### Breaking Changes
-
-- None (initial release)
-
-#### Migration Guide
-
-- None (initial release)
-
-#### Performance
-
-- Average response time: 100-500ms
-- Supports 500 concurrent connections
-- Rate limit window: 15 minutes
-- Max tokens per request: 1000 (configurable)
-
-#### Installation
-
-```bash
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
-#### Testing
-
-```bash
-npm test                    # Run all tests
-npm test -- --watch        # Watch mode
-npm test -- --coverage     # Coverage report
-```
-
-#### Credits
-
-- Created by Nelaka Withanage
-- OpenRouter API integration
-- GitHub API integration
-
----
-
-**Format:** [Keep a Changelog](https://keepachangelog.com/)
-**Versioning:** [Semantic Versioning](https://semver.org/)
-**Last Updated:** November 8, 2025
+- **ai:** Update endpoint from /chat to /llm for AI integration ([4a93865](https://github.com/NelakaWith/pulse-server/commit/4a93865497c3a72f2615ac8ab84facf085401945))
+- **ci:** disable API key auth in tests to prevent 401 errors ([468b662](https://github.com/NelakaWith/pulse-server/commit/468b662f7e4c14e6498c91e9162369de71e22ea2))
+- **docs:** remove extraneous markdown syntax from Conventional Commits guide ([7dffded](https://github.com/NelakaWith/pulse-server/commit/7dffded03a286dc8452d041ec230bdbb7696066a))
+- **docs:** update example in generateApiKeys documentation for clarity ([c4ecdc3](https://github.com/NelakaWith/pulse-server/commit/c4ecdc353927684bc960d5a1acb91042152bf3b6))
+- **docs:** update license badge in README from GPL to AGPL 3.0 ([7869bf7](https://github.com/NelakaWith/pulse-server/commit/7869bf71d736d875bbb8ffd59be759e6839830f1))
+- **docs:** update license information in README from ISC to AGPL 3.0 ([01eb613](https://github.com/NelakaWith/pulse-server/commit/01eb6134230b06a055bdc213666b65bc1dce3919))
+- **import:** Change import statement for openRouterService to named import ([678783e](https://github.com/NelakaWith/pulse-server/commit/678783efd5eb2ef673bb5ee00743672e65eeef99))
+- **logging:** simplify error logging in enrichment tasks ([6ab3481](https://github.com/NelakaWith/pulse-server/commit/6ab348139d40437237a291f64c2eb4bbfe78c2a7))
+- **rateLimit:** add periodic cleanup of expired request entries ([ada3143](https://github.com/NelakaWith/pulse-server/commit/ada3143b56a11edb143a0adb5e930f3183bbb271))
+- **release:** use semver for version increment logic in release script ([458e875](https://github.com/NelakaWith/pulse-server/commit/458e8755d17c2519a457d8dcf5cd6651565bc220))
+- **tests:** ensure app is properly closed after tests ([2519a99](https://github.com/NelakaWith/pulse-server/commit/2519a9969e08b0e72618220751f34cc3e09d73e7))
+- **tests:** update expected response status codes to include authentication errors ([e43fb21](https://github.com/NelakaWith/pulse-server/commit/e43fb21cea2633f2a04c9b8a64796c4e9caaef0c))
