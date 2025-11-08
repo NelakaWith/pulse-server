@@ -68,6 +68,22 @@ export const auth = (req, res, next) => {
 export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
   const requests = new Map(); // Map to track requests: "ip" or "apiKey" -> [timestamps]
 
+  // Periodic cleanup of expired entries
+  setInterval(() => {
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    for (const [key, timestamps] of requests.entries()) {
+      const validTimestamps = timestamps.filter((time) => time > windowStart);
+
+      if (validTimestamps.length > 0) {
+        requests.set(key, validTimestamps);
+      } else {
+        requests.delete(key);
+      }
+    }
+  }, windowMs);
+
   return (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress;
     const identifier = req.apiKey ? `key:${req.apiKey}` : `ip:${ip}`; // Use API key if available
