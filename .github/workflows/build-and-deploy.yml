@@ -26,11 +26,6 @@ jobs:
           node --version
           npm --version
           node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors
-      - name: Build and copy files
-        run: |
-          mkdir -p /tmp/deploy
-          cp -r . /tmp/deploy/
-          rm -rf /tmp/deploy/node_modules /tmp/deploy/.git /tmp/deploy/tests
       - name: Deploy to server
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -40,5 +35,5 @@ jobs:
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          rsync -avz -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" /tmp/deploy/ $DROPLET_USER@$DEPLOY_HOST:/var/www/pulse-server/
+          rsync -avz --exclude='node_modules' --exclude='.git' --exclude='tests' --exclude='.github' --exclude='*.md' --exclude='LICENSE' -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" ./ $DROPLET_USER@$DEPLOY_HOST:/var/www/pulse-server/
           ssh -i ~/.ssh/id_rsa $DROPLET_USER@$DEPLOY_HOST "cd /var/www/pulse-server && npm ci --only=production && pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production && pm2 save"
