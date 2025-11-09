@@ -1,26 +1,28 @@
 name: PR Lint
 on:
-    pull_request:
-        types: [opened, edited, synchronize]
+  pull_request:
+    types: [opened, edited, synchronize]
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
-            - name: Install dependencies
-              run: npm ci --only=dev
-            - name: Lint PR title
-              run: |
-                  echo "Validating PR title: ${{ github.event.pull_request.title }}"
-                  if echo "${{ github.event.pull_request.title }}" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert)(\(.+\))?!?:"; then
-                    echo "✅ PR title follows conventional commits format"
-                  else
-                    echo "❌ PR title does not follow conventional commits format"
-                    echo "Valid formats: feat(scope): description, fix: description, etc."
-                    exit 1
-                  fi
-            - name: Lint commits
-              run: |
-                  echo "Linting commits in PR..."
-                  npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci --only=dev
+      - name: Lint PR title
+        run: |
+          echo "Validating PR title: ${{ github.event.pull_request.title }}"
+          if echo "${{ github.event.pull_request.title }}" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore|ci|revert)(\(.+\))?!?:"; then
+            echo "✅ PR title follows conventional commits format"
+          else
+            echo "❌ PR title does not follow conventional commits format"
+            echo "Valid formats: feat(scope): description, fix: description, etc."
+            exit 1
+          fi
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.event.pull_request.base.ref }}
+      - name: Lint commits
+        run: |
+          echo "Linting commits in PR..."
+          npx commitlint --from origin/${{ github.event.pull_request.base.ref }} --to ${{ github.event.pull_request.head.sha }} --verbose
