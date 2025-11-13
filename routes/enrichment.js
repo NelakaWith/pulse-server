@@ -7,6 +7,65 @@ import { config } from "../config/index.js";
 const router = express.Router();
 
 /**
+ * Parse AI analysis text into structured sections
+ */
+function parseAnalysisIntoSections(content) {
+  const sections = {
+    overview: "",
+    codeQuality: "",
+    healthMetrics: "",
+    areasForImprovement: "",
+    recommendations: "",
+    raw: content,
+  };
+
+  // Split content by common section headers (case insensitive)
+  const lines = content.split("\n");
+  let currentSection = "overview";
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase().trim();
+
+    if (lowerLine.includes("code quality") || lowerLine.includes("quality")) {
+      currentSection = "codeQuality";
+    } else if (lowerLine.includes("health") || lowerLine.includes("metrics")) {
+      currentSection = "healthMetrics";
+    } else if (
+      lowerLine.includes("improvement") ||
+      lowerLine.includes("areas")
+    ) {
+      currentSection = "areasForImprovement";
+    } else if (lowerLine.includes("recommendation")) {
+      currentSection = "recommendations";
+    } else if (
+      lowerLine.includes("overview") ||
+      lowerLine.includes("summary")
+    ) {
+      currentSection = "overview";
+    } else {
+      // Add content to current section
+      if (sections[currentSection]) {
+        sections[currentSection] += line + "\n";
+      } else {
+        sections[currentSection] = line + "\n";
+      }
+    }
+  }
+
+  // Clean up sections (remove empty ones, trim whitespace)
+  Object.keys(sections).forEach((key) => {
+    if (key !== "raw") {
+      sections[key] = sections[key].trim();
+      if (!sections[key]) {
+        delete sections[key];
+      }
+    }
+  });
+
+  return sections;
+}
+
+/**
  * POST /api/enrichment
  * Unified endpoint for repository enrichment tasks
  *
@@ -69,8 +128,6 @@ async function handleAnalyzeTask(res, owner, name, question) {
       question ||
       "Provide a comprehensive analysis of this repository's code quality, health, and potential areas for improvement.";
 
-    Logger.info(`[Enrichment] Analyze task: ${owner}/${name}`);
-
     // Step 1: Get GitHub repository data
     Logger.info(`[Enrichment] Fetching repository: ${owner}/${name}`);
     const repoResult = await githubService.getRepository(owner, name);
@@ -102,9 +159,27 @@ async function handleAnalyzeTask(res, owner, name, question) {
       Logger.warn(`[Enrichment] Issues fetch failed: ${issuesResult.error}`);
     }
 
-    // Step 3: Prepare context for AI
+    // Step 3: Get repository pull requests for additional context
+    Logger.info(
+      `[Enrichment] Fetching recent pull requests for ${owner}/${name}`
+    );
+    const prsResult = await githubService.getRepositoryPullRequests(
+      owner,
+      name,
+      5
+    );
+    if (prsResult.success) {
+      Logger.info(
+        `[Enrichment] PRs data: ${prsResult.data.totalCount} total PRs, fetched ${prsResult.data.nodes.length} recent`
+      );
+    } else {
+      Logger.warn(`[Enrichment] PRs fetch failed: ${prsResult.error}`);
+    }
+
+    // Step 4: Prepare context for AI
     const repoData = repoResult.data;
     const issuesData = issuesResult.success ? issuesResult.data : null;
+    const prsData = prsResult.success ? prsResult.data : null;
 
     const contextPrompt = `
 Repository Information:
@@ -113,6 +188,11 @@ Repository Information:
 - Stars: ${repoData.stargazerCount}
 - Forks: ${repoData.forkCount}
 - Primary Language: ${repoData.primaryLanguage?.name || "Unknown"}
+- Languages: ${
+      repoData.languages?.nodes?.map((l) => l.name).join(", ") || "Unknown"
+    }
+- Default Branch: ${repoData.defaultBranchRef?.name || "Unknown"}
+- Branches: ${repoData.refs?.nodes?.map((r) => r.name).join(", ") || "Unknown"}
 - Created: ${repoData.createdAt}
 - Last Updated: ${repoData.updatedAt}
 
@@ -126,11 +206,24 @@ ${issuesData.nodes
     : ""
 }
 
+${
+  prsData
+    ? `Recent Pull Requests (${prsData.totalCount} total):
+${prsData.nodes
+  .slice(0, 3)
+  .map(
+    (pr) =>
+      `- #${pr.number}: ${pr.title} (${pr.state}) - ${pr.additions}+/${pr.deletions}-`
+  )
+  .join("\n")}`
+    : ""
+}
+
 User Question: ${analysisQuestion}
 
-Please analyze this repository and answer the question based on the provided data.`;
+Please analyze this repository and answer the question based on the provided data. Structure your response with clear sections like: Code Quality, Health Metrics, Areas for Improvement, and Recommendations.`;
 
-    // Step 4: Send to AI
+    // Step 5: Send to AI
     Logger.info(
       `[Enrichment] Sending context to AI (${contextPrompt.length} characters)`
     );
@@ -153,22 +246,64 @@ Please analyze this repository and answer the question based on the provided dat
       `[Enrichment] AI analysis completed successfully (${aiResult.data.choices[0].message.content.length} characters response)`
     );
 
-    // Step 5: Return enriched response
+    // Step 6: Parse AI analysis into structured sections
+    const aiContent = aiResult.data.choices[0].message.content;
+    const analysisSections = parseAnalysisIntoSections(aiContent);
+
+    // Step 7: Return enriched response
     return res.json({
       success: true,
       data: {
         repository: {
-          name: repoData.name,
-          owner: owner,
-          url: repoData.url,
-          stars: repoData.stargazerCount,
-          language: repoData.primaryLanguage?.name,
+          basic: {
+            name: repoData.name,
+            owner: owner,
+            url: repoData.url,
+            description: repoData.description,
+            createdAt: repoData.createdAt,
+            updatedAt: repoData.updatedAt,
+          },
+          stats: {
+            stars: repoData.stargazerCount,
+            forks: repoData.forkCount,
+          },
+          languages:
+            repoData.languages?.nodes?.map((l) => ({
+              name: l.name,
+              color: l.color,
+            })) || [],
+          branches: repoData.refs?.nodes?.map((r) => r.name) || [],
+          defaultBranch: repoData.defaultBranchRef?.name,
         },
-        analysis: aiResult.data.choices[0].message.content,
-        metadata: {
-          totalIssues: issuesData?.totalCount || 0,
-          lastUpdated: repoData.updatedAt,
-        },
+        issues: issuesData
+          ? {
+              totalCount: issuesData.totalCount,
+              recent: issuesData.nodes.slice(0, 3).map((issue) => ({
+                number: issue.number,
+                title: issue.title,
+                state: issue.state,
+                author: issue.author.login,
+                labels: issue.labels.nodes.map((l) => l.name),
+                createdAt: issue.createdAt,
+              })),
+            }
+          : null,
+        pullRequests: prsData
+          ? {
+              totalCount: prsData.totalCount,
+              recent: prsData.nodes.slice(0, 3).map((pr) => ({
+                number: pr.number,
+                title: pr.title,
+                state: pr.state,
+                author: pr.author.login,
+                additions: pr.additions,
+                deletions: pr.deletions,
+                changedFiles: pr.changedFiles,
+                createdAt: pr.createdAt,
+              })),
+            }
+          : null,
+        analysis: analysisSections,
       },
     });
   } catch (error) {
