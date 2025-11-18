@@ -27,3 +27,4 @@ jobs:
             git push --follow-tags origin main
           else
             echo "Skipping release - no releasable commits"
+          fi
