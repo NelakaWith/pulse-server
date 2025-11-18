@@ -48,11 +48,9 @@ Pulse Server uses **GitHub Actions** for continuous integration and deployment w
 
 ---
 
-**Triggers:** Pull Request created/updated
-
 ### 3. **Build and Deploy Pipeline** (`.drone.yml` - build-and-deploy)
 
-**Purpose:** Validates that PR titles and commits follow conventional commits format
+**Purpose:** Build and deploy application to production server
 **Triggers:**
 
 - Push to `main` or `develop` branch
@@ -106,9 +104,11 @@ services/**
 
 ### 5. **Release Workflow** (`.github/workflows/release.yml`)
 
-**Triggers:** Push to `main` branch (after PR merge)
-**Triggers:** Tag push (e.g., `git push --tags`)
-**Purpose:** Automatically create semantic version releases
+**Triggers:**
+
+- Push to `main` branch (after PR merge)
+- Tag push (e.g., `git push --tags`)
+  **Purpose:** Automatically create semantic version releases
 
 **Steps:**
 
