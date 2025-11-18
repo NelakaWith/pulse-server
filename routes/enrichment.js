@@ -248,6 +248,33 @@ async function handleAnalyzeTask(
     const issuesData = issuesResult.success ? issuesResult.data : null;
     const prsData = prsResult.success ? prsResult.data : null;
 
+    // Compact issues/PRs for the AI payload (short excerpts to control size)
+    const issuesSummary = issuesData
+      ? issuesData.nodes.slice(0, 10).map((issue) => ({
+          number: issue.number,
+          title: issue.title,
+          state: issue.state,
+          author: issue.author?.login || null,
+          labels: issue.labels.nodes.map((l) => l.name),
+          createdAt: issue.createdAt,
+          body_excerpt: (issue.body || "").slice(0, 400),
+        }))
+      : [];
+
+    const prsSummary = prsData
+      ? prsData.nodes.slice(0, 10).map((pr) => ({
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          author: pr.author?.login || null,
+          additions: pr.additions,
+          deletions: pr.deletions,
+          changedFiles: pr.changedFiles,
+          createdAt: pr.createdAt,
+          body_excerpt: (pr.body || "").slice(0, 400),
+        }))
+      : [];
+
     const payload = {
       repo_url: `https://github.com/${owner}/${name}`,
       analysis_goal: analysisQuestion,
@@ -262,14 +289,16 @@ async function handleAnalyzeTask(
           ? readmeResult.data.content.replace(/\n/g, "\\n").slice(0, 1200)
           : "",
       recent_commits: commitsResult.success ? commitsResult.data : [],
+      issues: issuesSummary,
+      pull_requests: prsSummary,
       requested_file_snippets: fileSnippets,
     };
 
-    const contextPrompt = `Please analyze the following repository. Use the payload JSON to guide your response (be concise):\n\n${JSON.stringify(
+    const contextPrompt = `Please analyze the following repository. Use the payload JSON to guide your response. Provide a detailed, actionable, and well-formatted analysis.\n\n${JSON.stringify(
       payload,
       null,
       2
-    )}\n\nPlease structure your response with clear sections: Overview, Code Quality, Health Metrics, Areas for Improvement, and Recommendations.`;
+    )}\n\nThe model must follow these output rules and formatting guidelines (do not change the top-level sections):\n\n- Include the following sections: Overview, Code Quality, Health Metrics, Areas for Improvement, and Recommendations.\n- For each section, provide:\n  * A 1-sentence summary.\n  * Key Findings: a short bullet list (include file paths when relevant).\n  * For each finding, add a Severity label (High / Medium / Low).\n  * Suggested Fix: a concise remediation.\n  * Estimated Effort: very short (Low/Medium/High or numeric hours).\n- When applicable, call out Security and Performance concerns as distinct findings in Areas for Improvement.\n- End with a short prioritized list of Recommendations (1-5 items), each with a rationale and expected impact.\n- Keep the whole reply concise and limit overall length (preferably under 900 words) while providing enough detail for action.\n\nOptional: please include a small JSON snippet at the end called 'analysis_summary_json' with keys overview, codeQuality, healthMetrics, areasForImprovement, and recommendations that mirrors the prose. This helps programmatic parsing but is optional.\n\nPlease start your response now:`;
 
     // Step 5: Send to AI
     Logger.info(
