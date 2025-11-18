@@ -403,6 +403,83 @@ class GitHubService {
   }
 
   /**
+   * Get repository README content (decoded)
+   * @param {string} owner
+   * @param {string} name
+   */
+  async getRepositoryReadme(owner, name) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/readme`,
+        {
+          headers: { Accept: "application/vnd.github.v3.raw" },
+        }
+      );
+      // When using `application/vnd.github.v3.raw`, GitHub returns raw text
+      const content = response.data;
+      return { success: true, data: { content } };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(
+          `GitHub API Error (getRepositoryReadme): ${error.message}`
+        );
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get recent commits for a repository via REST
+   * @param {string} owner
+   * @param {string} name
+   * @param {number} perPage
+   */
+  async getRecentCommits(owner, name, perPage = 5) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/commits?per_page=${perPage}`
+      );
+      const commits = (response.data || []).map((c) => ({
+        sha: c.sha,
+        message: c.commit.message,
+        author: c.commit.author?.name || c.author?.login || null,
+        date: c.commit.author?.date || null,
+        url: c.html_url,
+      }));
+      return { success: true, data: commits };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(`GitHub API Error (getRecentCommits): ${error.message}`);
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get a repository file content (decoded)
+   * @param {string} owner
+   * @param {string} name
+   * @param {string} path
+   */
+  async getFileContent(owner, name, path) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/contents/${encodeURIComponent(path)}`,
+        { headers: { Accept: "application/vnd.github.v3.raw" } }
+      );
+      const content = response.data;
+      return { success: true, data: { path, content } };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(
+          `GitHub API Error (getFileContent ${path}): ${error.message}`
+        );
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Check if GitHub token is configured
    * @returns {boolean} True if token is available
    */

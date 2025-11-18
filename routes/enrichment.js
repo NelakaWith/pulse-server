@@ -25,31 +25,29 @@ function parseAnalysisIntoSections(content) {
 
   for (const line of lines) {
     const lowerLine = line.toLowerCase().trim();
-
-    if (lowerLine.includes("code quality") || lowerLine.includes("quality")) {
+    // Detect headers using starts-with style detection to avoid mid-line matches
+    if (/^code quality|^quality/.test(lowerLine)) {
       currentSection = "codeQuality";
-    } else if (lowerLine.includes("health") || lowerLine.includes("metrics")) {
-      currentSection = "healthMetrics";
-    } else if (
-      lowerLine.includes("improvement") ||
-      lowerLine.includes("areas")
-    ) {
-      currentSection = "areasForImprovement";
-    } else if (lowerLine.includes("recommendation")) {
-      currentSection = "recommendations";
-    } else if (
-      lowerLine.includes("overview") ||
-      lowerLine.includes("summary")
-    ) {
-      currentSection = "overview";
-    } else {
-      // Add content to current section
-      if (sections[currentSection]) {
-        sections[currentSection] += line + "\n";
-      } else {
-        sections[currentSection] = line + "\n";
-      }
+      continue;
     }
+    if (/^health|^metrics/.test(lowerLine)) {
+      currentSection = "healthMetrics";
+      continue;
+    }
+    if (/^(areas for improvement|areas|improvement)/.test(lowerLine)) {
+      currentSection = "areasForImprovement";
+      continue;
+    }
+    if (/^recommendation/.test(lowerLine)) {
+      currentSection = "recommendations";
+      continue;
+    }
+    if (/^overview|^summary/.test(lowerLine)) {
+      currentSection = "overview";
+      continue;
+    }
+    // Add content to current section
+    sections[currentSection] = (sections[currentSection] || "") + line + "\n";
   }
 
   // Clean up sections (remove empty ones, trim whitespace)
@@ -76,11 +74,23 @@ function parseAnalysisIntoSections(content) {
  *   "scope": "repo",
  *   "task": "analyze" | "summarize-issues",
  *   "question": "optional custom question for analyze task"
+ *   "files": ["src/index.js", "README.md"] // optional - list of file paths to include snippets
+ *   "programmingLanguages": ["JavaScript", "TypeScript"] // optional - hints to focus analysis
+ *   "frameworks": ["Express"] // optional - hints to focus analysis
  * }
  */
 router.post("/", async (req, res) => {
   try {
-    const { owner, name, scope, task, question } = req.body;
+    const {
+      owner,
+      name,
+      scope,
+      task,
+      question,
+      files: requestedFiles,
+      programmingLanguages,
+      frameworks,
+    } = req.body;
 
     // Validate required fields
     if (!owner || !name || !scope || !task) {
@@ -100,7 +110,15 @@ router.post("/", async (req, res) => {
 
     // Route based on task
     if (task === "analyze") {
-      return handleAnalyzeTask(res, owner, name, question);
+      return handleAnalyzeTask(
+        res,
+        owner,
+        name,
+        question,
+        requestedFiles,
+        programmingLanguages,
+        frameworks
+      );
     } else if (task === "summarize-issues") {
       return handleSummarizeIssuesTask(res, owner, name);
     } else {
@@ -121,7 +139,15 @@ router.post("/", async (req, res) => {
 /**
  * Handle analyze task
  */
-async function handleAnalyzeTask(res, owner, name, question) {
+async function handleAnalyzeTask(
+  res,
+  owner,
+  name,
+  question,
+  requestedFiles = [],
+  programmingLanguages = [],
+  frameworks = []
+) {
   try {
     // For analyze task, use a default question if not provided
     const analysisQuestion =
@@ -176,52 +202,74 @@ async function handleAnalyzeTask(res, owner, name, question) {
       Logger.warn(`[Enrichment] PRs fetch failed: ${prsResult.error}`);
     }
 
+    // Step 4: Get extra resources: README, commits, and requested file snippets
+    Logger.info(`[Enrichment] Fetching repository README for ${owner}/${name}`);
+    const readmeResult = await githubService.getRepositoryReadme(owner, name);
+    if (readmeResult.success) {
+      Logger.info(`[Enrichment] README fetched (${owner}/${name})`);
+    } else {
+      Logger.warn(`[Enrichment] README fetch failed: ${readmeResult.error}`);
+    }
+
+    Logger.info(`[Enrichment] Fetching recent commits for ${owner}/${name}`);
+    const commitsResult = await githubService.getRecentCommits(owner, name, 5);
+    if (commitsResult.success) {
+      Logger.info(
+        `[Enrichment] ${commitsResult.data.length} commits fetched for ${owner}/${name}`
+      );
+    } else {
+      Logger.warn(`[Enrichment] Commits fetch failed: ${commitsResult.error}`);
+    }
+
+    // Fetch user requested file snippets (limit 3 files to keep token usage reasonable)
+    const fileSnippets = [];
+    if (Array.isArray(requestedFiles) && requestedFiles.length) {
+      const limitedFiles = requestedFiles.slice(0, 3);
+      for (const path of limitedFiles) {
+        Logger.info(`[Enrichment] Fetching file content for ${path}`);
+        const fileResult = await githubService.getFileContent(
+          owner,
+          name,
+          path
+        );
+        if (fileResult.success) {
+          const snippet = (fileResult.data.content || "").slice(0, 1200); // 1200 chars max
+          fileSnippets.push({ path, snippet });
+        } else {
+          Logger.warn(
+            `[Enrichment] File fetch failed for ${path}: ${fileResult.error}`
+          );
+        }
+      }
+    }
+
     // Step 4: Prepare context for AI
     const repoData = repoResult.data;
     const issuesData = issuesResult.success ? issuesResult.data : null;
     const prsData = prsResult.success ? prsResult.data : null;
 
-    const contextPrompt = `
-Repository Information:
-- Name: ${repoData.name}
-- Description: ${repoData.description || "No description"}
-- Stars: ${repoData.stargazerCount}
-- Forks: ${repoData.forkCount}
-- Primary Language: ${repoData.primaryLanguage?.name || "Unknown"}
-- Languages: ${
-      repoData.languages?.nodes?.map((l) => l.name).join(", ") || "Unknown"
-    }
-- Default Branch: ${repoData.defaultBranchRef?.name || "Unknown"}
-- Branches: ${repoData.refs?.nodes?.map((r) => r.name).join(", ") || "Unknown"}
-- Created: ${repoData.createdAt}
-- Last Updated: ${repoData.updatedAt}
+    const payload = {
+      repo_url: `https://github.com/${owner}/${name}`,
+      analysis_goal: analysisQuestion,
+      files: requestedFiles || [],
+      programming_languages: programmingLanguages?.length
+        ? programmingLanguages
+        : repoData.languages?.nodes?.map((l) => l.name) || [],
+      frameworks: frameworks || [],
+      repo_description: repoData.description || "",
+      readme_excerpt:
+        readmeResult.success && readmeResult.data.content
+          ? readmeResult.data.content.replace(/\n/g, "\\n").slice(0, 1200)
+          : "",
+      recent_commits: commitsResult.success ? commitsResult.data : [],
+      requested_file_snippets: fileSnippets,
+    };
 
-${
-  issuesData
-    ? `Recent Issues (${issuesData.totalCount} total):
-${issuesData.nodes
-  .slice(0, 3)
-  .map((issue) => `- #${issue.number}: ${issue.title} (${issue.state})`)
-  .join("\n")}`
-    : ""
-}
-
-${
-  prsData
-    ? `Recent Pull Requests (${prsData.totalCount} total):
-${prsData.nodes
-  .slice(0, 3)
-  .map(
-    (pr) =>
-      `- #${pr.number}: ${pr.title} (${pr.state}) - ${pr.additions}+/${pr.deletions}-`
-  )
-  .join("\n")}`
-    : ""
-}
-
-User Question: ${analysisQuestion}
-
-Please analyze this repository and answer the question based on the provided data. Structure your response with clear sections like: Code Quality, Health Metrics, Areas for Improvement, and Recommendations.`;
+    const contextPrompt = `Please analyze the following repository. Use the payload JSON to guide your response (be concise):\n\n${JSON.stringify(
+      payload,
+      null,
+      2
+    )}\n\nPlease structure your response with clear sections: Overview, Code Quality, Health Metrics, Areas for Improvement, and Recommendations.`;
 
     // Step 5: Send to AI
     Logger.info(
@@ -275,6 +323,9 @@ Please analyze this repository and answer the question based on the provided dat
           branches: repoData.refs?.nodes?.map((r) => r.name) || [],
           defaultBranch: repoData.defaultBranchRef?.name,
         },
+        readme: readmeResult.success ? readmeResult.data.content : null,
+        recentCommits: commitsResult.success ? commitsResult.data : [],
+        requestedFiles: fileSnippets,
         issues: issuesData
           ? {
               totalCount: issuesData.totalCount,
@@ -421,4 +472,5 @@ Please provide:
   }
 }
 
+export { parseAnalysisIntoSections };
 export default router;
