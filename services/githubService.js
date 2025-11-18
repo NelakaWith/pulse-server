@@ -1,13 +1,27 @@
 import { GraphQLClient, gql } from "graphql-request";
+import axios from "axios";
 import { config, isDevelopment } from "../config/index.js";
 import { Logger } from "../utils/index.js";
 
 class GitHubService {
   constructor() {
-    this.client = new GraphQLClient(config.github.graphqlApiBaseUrl, {
-      headers: {
-        authorization: `Bearer ${config.github.token}`,
-      },
+    // Use GraphQL client with token for authenticated requests
+    this.graphqlClient = new GraphQLClient(config.github.graphqlApiBaseUrl, {
+      headers: config.github.token
+        ? {
+            authorization: `Bearer ${config.github.token}`,
+          }
+        : {},
+    });
+
+    // Use axios for REST API calls (can work without auth for public repos)
+    this.restClient = axios.create({
+      baseURL: config.github.restApiBaseUrl,
+      headers: config.github.token
+        ? {
+            authorization: `Bearer ${config.github.token}`,
+          }
+        : {},
     });
   }
 
@@ -18,48 +32,74 @@ class GitHubService {
    * @returns {Promise<Object>} Repository data
    */
   async getRepository(owner, name) {
-    const query = gql`
-      query GetRepository($owner: String!, $name: String!) {
-        repository(owner: $owner, name: $name) {
-          id
-          name
-          description
-          url
-          stargazerCount
-          forkCount
-          createdAt
-          updatedAt
-          primaryLanguage {
-            name
-            color
-          }
-          languages(first: 10) {
-            nodes {
-              name
-              color
+    try {
+      // First try REST API (works without auth for public repos)
+      const restResponse = await this.restClient.get(`/repos/${owner}/${name}`);
+      const repoData = restResponse.data;
+
+      // Try to get additional data with GraphQL if token is available
+      let languages = [];
+      let branches = [];
+      let defaultBranch = repoData.default_branch;
+
+      if (config.github.token) {
+        try {
+          const query = gql`
+            query GetRepositoryDetails($owner: String!, $name: String!) {
+              repository(owner: $owner, name: $name) {
+                languages(first: 10) {
+                  nodes {
+                    name
+                    color
+                  }
+                }
+                refs(refPrefix: "refs/heads/", first: 10) {
+                  nodes {
+                    name
+                  }
+                }
+              }
             }
-          }
-          defaultBranchRef {
-            name
-          }
-          refs(refPrefix: "refs/heads/", first: 10) {
-            nodes {
-              name
-            }
-          }
+          `;
+          const graphqlData = await this.graphqlClient.request(query, {
+            owner,
+            name,
+          });
+          languages = graphqlData.repository.languages?.nodes || [];
+          branches =
+            graphqlData.repository.refs?.nodes?.map((r) => r.name) || [];
+        } catch (graphqlError) {
+          Logger.warn(
+            `GraphQL failed, using REST data only: ${graphqlError.message}`
+          );
         }
       }
-    `;
 
-    try {
-      const data = await this.client.request(query, { owner, name });
+      // Format response to match expected structure
+      const formattedData = {
+        id: repoData.id.toString(),
+        name: repoData.name,
+        description: repoData.description,
+        url: repoData.html_url,
+        stargazerCount: repoData.stargazers_count,
+        forkCount: repoData.forks_count,
+        createdAt: repoData.created_at,
+        updatedAt: repoData.updated_at,
+        primaryLanguage: repoData.language
+          ? { name: repoData.language, color: null }
+          : null,
+        languages: { nodes: languages },
+        defaultBranchRef: { name: defaultBranch },
+        refs: { nodes: branches.map((name) => ({ name })) },
+      };
+
       return {
         success: true,
-        data: data.repository,
+        data: formattedData,
       };
     } catch (error) {
       if (isDevelopment) {
-        Logger.error(`GitHub GraphQL Error (getRepository): ${error.message}`);
+        Logger.error(`GitHub API Error (getRepository): ${error.message}`);
       }
       return {
         success: false,
@@ -124,7 +164,7 @@ class GitHubService {
     `;
 
     try {
-      const data = await this.client.request(query, {
+      const data = await this.graphqlClient.request(query, {
         owner,
         name,
         first,
@@ -218,7 +258,7 @@ class GitHubService {
     `;
 
     try {
-      const data = await this.client.request(query, {
+      const data = await this.graphqlClient.request(query, {
         owner,
         name,
         first,
@@ -282,7 +322,7 @@ class GitHubService {
     `;
 
     try {
-      const data = await this.client.request(query, { login, first });
+      const data = await this.graphqlClient.request(query, { login, first });
       return {
         success: true,
         data: data.user.repositories,
@@ -341,7 +381,7 @@ class GitHubService {
     `;
 
     try {
-      const data = await this.client.request(query, {
+      const data = await this.graphqlClient.request(query, {
         query: searchQuery,
         first,
       });
@@ -359,6 +399,83 @@ class GitHubService {
         success: false,
         error: error.message,
       };
+    }
+  }
+
+  /**
+   * Get repository README content (decoded)
+   * @param {string} owner
+   * @param {string} name
+   */
+  async getRepositoryReadme(owner, name) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/readme`,
+        {
+          headers: { Accept: "application/vnd.github.v3.raw" },
+        }
+      );
+      // When using `application/vnd.github.v3.raw`, GitHub returns raw text
+      const content = response.data;
+      return { success: true, data: { content } };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(
+          `GitHub API Error (getRepositoryReadme): ${error.message}`
+        );
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get recent commits for a repository via REST
+   * @param {string} owner
+   * @param {string} name
+   * @param {number} perPage
+   */
+  async getRecentCommits(owner, name, perPage = 5) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/commits?per_page=${perPage}`
+      );
+      const commits = (response.data || []).map((c) => ({
+        sha: c.sha,
+        message: c.commit.message,
+        author: c.commit.author?.name || c.author?.login || null,
+        date: c.commit.author?.date || null,
+        url: c.html_url,
+      }));
+      return { success: true, data: commits };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(`GitHub API Error (getRecentCommits): ${error.message}`);
+      }
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Get a repository file content (decoded)
+   * @param {string} owner
+   * @param {string} name
+   * @param {string} path
+   */
+  async getFileContent(owner, name, path) {
+    try {
+      const response = await this.restClient.get(
+        `/repos/${owner}/${name}/contents/${encodeURIComponent(path)}`,
+        { headers: { Accept: "application/vnd.github.v3.raw" } }
+      );
+      const content = response.data;
+      return { success: true, data: { path, content } };
+    } catch (error) {
+      if (isDevelopment) {
+        Logger.error(
+          `GitHub API Error (getFileContent ${path}): ${error.message}`
+        );
+      }
+      return { success: false, error: error.message };
     }
   }
 

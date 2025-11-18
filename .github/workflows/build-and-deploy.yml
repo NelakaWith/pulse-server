@@ -1,0 +1,40 @@
+name: Build and Deploy
+on:
+  push:
+    tags:
+      - "v*.*.*"
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci --loglevel=info
+      - name: Run tests
+        env:
+          NODE_ENV: test
+          API_KEY_AUTH_ENABLED: false
+          DEFAULT_AI_MODEL: deepseek/deepseek-chat
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_BASE_URL: ${{ secrets.OPENROUTER_BASE_URL }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_REST_API_BASE_URL: ${{ secrets.GH_REST_API_BASE_URL }}
+          GH_GRAPHQL_API_BASE_URL: ${{ secrets.GH_GRAPHQL_API_BASE_URL }}
+          FORCE_COLOR: 1
+        run: |
+          node --version
+          npm --version
+          node --experimental-vm-modules node_modules/jest/bin/jest.js --ci --forceExit --runInBand --verbose --colors
+      - name: Deploy to server
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          rsync -avz --exclude='node_modules' --exclude='.git' --exclude='tests' --exclude='.github' --exclude='*.md' --exclude='LICENSE' -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" ./ $DROPLET_USER@$DEPLOY_HOST:/var/www/pulse-server/
+          ssh -i ~/.ssh/id_rsa $DROPLET_USER@$DEPLOY_HOST "cd /var/www/pulse-server && npm ci --only=production && pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production && pm2 save"

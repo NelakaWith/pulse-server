@@ -40,6 +40,7 @@ Pulse Server uses **Drone CI** for continuous integration and deployment with a 
 3. Lint commit messages
 
 **Success Criteria:**
+Pulse Server uses **GitHub Actions** for continuous integration and deployment with a build-and-copy approach and PM2 for process management.
 
 - All tests pass (11/11)
 - No linting errors
@@ -49,22 +50,24 @@ Pulse Server uses **Drone CI** for continuous integration and deployment with a 
 
 ### 3. **Build and Deploy Pipeline** (`.drone.yml` - build-and-deploy)
 
+**Purpose:** Build and deploy application to production server
 **Triggers:**
 
 - Push to `main` or `develop` branch
 - Tag creation (e.g., `v1.2.3`)
 
-**Purpose:** Build, test, and deploy application to production server
+### 2. **Test Workflow** (`.github/workflows/test-on-pr.yml`)
 
-**Steps:**
+**Triggers:** Pull Request created/updated
 
 #### Build Phase
 
-1. **Install Dependencies** - Fresh install with `npm ci`
-2. **Run Tests** - Ensure all tests pass before deployment
-3. **Build and Copy** - Prepare deployment package (exclude dev files)
+### 3. **Build and Deploy Workflow** (`.github/workflows/build-and-deploy.yml`)
 
-#### Deployment Phase
+2. **Run Tests** - Ensure all tests pass before deployment
+   **Triggers:**
+
+- Tag creation (e.g., `v1.2.3`)
 
 4. **Copy to Server** - SCP files to `/var/www/pulse-server`
 5. **Install Production Deps** - `npm ci --only=production` on server
@@ -77,7 +80,9 @@ Pulse Server uses **Drone CI** for continuous integration and deployment with a 
 
 #### Notification Phase
 
-9. **Notify Success/Failure** - Send Telegram notification
+4. **Copy to Server** - rsync files to `/var/www/pulse-server` via SSH
+
+5. **Notify Success/Failure** - Send Telegram notification
 
 **Files Deployed:**
 
@@ -90,49 +95,55 @@ ecosystem.config.js
 routes/**
 middleware/**
 services/**
-utils/**
+### 4. **Auto-Release Workflow** (`.github/workflows/auto-release.yml`)
 ```
 
----
+## **Triggers:** Push to `main` branch (after PR merge)
 
 ### 4. **Auto-Release Pipeline** (`.drone-release.yml`)
 
-**Triggers:** Push to `main` branch (after PR merge)
+### 5. **Release Workflow** (`.github/workflows/release.yml`)
 
-**Purpose:** Automatically create semantic version releases
+**Triggers:**
+
+- Push to `main` branch (after PR merge)
+- Tag push (e.g., `git push --tags`)
+  **Purpose:** Automatically create semantic version releases
 
 **Steps:**
 
-1. **Check for Release** - Analyze commits since last tag
+## Required Secrets
 
+1. **Check for Release** - Analyze commits since last tag
+   Configure these secrets in your GitHub repository settings (Settings → Secrets and variables → Actions):
    - Look for `feat:`, `fix:`, `perf:`, `revert:`, or `BREAKING CHANGE:`
    - Skip if only `docs:`, `chore:`, `style:` commits
 
-2. **Create Release** - If releasable commits found:
+```
+DEPLOY_HOST          # Server hostname/IP
+DROPLET_USER         # SSH username
+SSH_PRIVATE_KEY      # SSH private key
+```
 
-   - Run `npm run release` (standard-version)
-   - Bump version in `package.json`
-   - Update `CHANGELOG.md`
-   - Create git tag
-   - Push changes and tags
+- Create git tag
+- Push changes and tags
 
-3. **Notify Release** - Send Telegram notification with new version
-
-4. **Trigger Deployment** - Automatically deploy the new release
+```
+GITHUB_TOKEN         # GitHub personal access token
+```
 
 **Version Bumping Rules:**
 
-- `feat:` → Minor version (1.0.0 → 1.1.0)
-- `fix:` → Patch version (1.0.0 → 1.0.1)
-- `BREAKING CHANGE:` → Major version (1.0.0 → 2.0.0)
+```
+TELEGRAM_TOKEN       # Telegram bot token
+TELEGRAM_CHAT_ID     # Telegram chat ID for notifications
+```
 
 ---
 
 ### 5. **Release Pipeline** (`.drone.yml` - release)
 
-**Triggers:** Tag push (e.g., `git push --tags`)
-
-**Purpose:** Create GitHub release with changelog
+### Auto-release workflow uses GITHUB_TOKEN and SSH_PRIVATE_KEY for pushing tags and releases.
 
 **Steps:**
 

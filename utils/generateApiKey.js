@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import { fileURLToPath } from "url";
+import path from "path";
 
 /**
  * Generate a secure random API key
@@ -58,7 +60,8 @@ export function hashApiKey(apiKey) {
 }
 
 // CLI: Generate keys when run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+const __filename = fileURLToPath(import.meta.url);
+if (path.resolve(process.argv[1]) === path.resolve(__filename)) {
   const environment = process.argv[2] || "dev";
   const count = parseInt(process.argv[3]) || 1;
 

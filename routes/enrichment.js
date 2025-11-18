@@ -7,6 +7,63 @@ import { config } from "../config/index.js";
 const router = express.Router();
 
 /**
+ * Parse AI analysis text into structured sections
+ */
+function parseAnalysisIntoSections(content) {
+  const sections = {
+    overview: "",
+    codeQuality: "",
+    healthMetrics: "",
+    areasForImprovement: "",
+    recommendations: "",
+    raw: content,
+  };
+
+  // Split content by common section headers (case insensitive)
+  const lines = content.split("\n");
+  let currentSection = "overview";
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase().trim();
+    // Detect headers using starts-with style detection to avoid mid-line matches
+    if (/^code quality|^quality/.test(lowerLine)) {
+      currentSection = "codeQuality";
+      continue;
+    }
+    if (/^health|^metrics/.test(lowerLine)) {
+      currentSection = "healthMetrics";
+      continue;
+    }
+    if (/^(areas for improvement|areas|improvement)/.test(lowerLine)) {
+      currentSection = "areasForImprovement";
+      continue;
+    }
+    if (/^recommendation/.test(lowerLine)) {
+      currentSection = "recommendations";
+      continue;
+    }
+    if (/^overview|^summary/.test(lowerLine)) {
+      currentSection = "overview";
+      continue;
+    }
+    // Add content to current section
+    sections[currentSection] = (sections[currentSection] || "") + line + "\n";
+  }
+
+  // Clean up sections (remove empty ones, trim whitespace)
+  Object.keys(sections).forEach((key) => {
+    if (key !== "raw") {
+      sections[key] = sections[key].trim();
+      if (!sections[key]) {
+        delete sections[key];
+      }
+    }
+  });
+
+  return sections;
+}
+
+/**
  * POST /api/enrichment
  * Unified endpoint for repository enrichment tasks
  *
@@ -17,11 +74,23 @@ const router = express.Router();
  *   "scope": "repo",
  *   "task": "analyze" | "summarize-issues",
  *   "question": "optional custom question for analyze task"
+ *   "files": ["src/index.js", "README.md"] // optional - list of file paths to include snippets
+ *   "programmingLanguages": ["JavaScript", "TypeScript"] // optional - hints to focus analysis
+ *   "frameworks": ["Express"] // optional - hints to focus analysis
  * }
  */
 router.post("/", async (req, res) => {
   try {
-    const { owner, name, scope, task, question } = req.body;
+    const {
+      owner,
+      name,
+      scope,
+      task,
+      question,
+      files: requestedFiles,
+      programmingLanguages,
+      frameworks,
+    } = req.body;
 
     // Validate required fields
     if (!owner || !name || !scope || !task) {
@@ -41,7 +110,15 @@ router.post("/", async (req, res) => {
 
     // Route based on task
     if (task === "analyze") {
-      return handleAnalyzeTask(res, owner, name, question);
+      return handleAnalyzeTask(
+        res,
+        owner,
+        name,
+        question,
+        requestedFiles,
+        programmingLanguages,
+        frameworks
+      );
     } else if (task === "summarize-issues") {
       return handleSummarizeIssuesTask(res, owner, name);
     } else {
@@ -62,14 +139,20 @@ router.post("/", async (req, res) => {
 /**
  * Handle analyze task
  */
-async function handleAnalyzeTask(res, owner, name, question) {
+async function handleAnalyzeTask(
+  res,
+  owner,
+  name,
+  question,
+  requestedFiles = [],
+  programmingLanguages = [],
+  frameworks = []
+) {
   try {
     // For analyze task, use a default question if not provided
     const analysisQuestion =
       question ||
       "Provide a comprehensive analysis of this repository's code quality, health, and potential areas for improvement.";
-
-    Logger.info(`[Enrichment] Analyze task: ${owner}/${name}`);
 
     // Step 1: Get GitHub repository data
     Logger.info(`[Enrichment] Fetching repository: ${owner}/${name}`);
@@ -102,35 +185,122 @@ async function handleAnalyzeTask(res, owner, name, question) {
       Logger.warn(`[Enrichment] Issues fetch failed: ${issuesResult.error}`);
     }
 
-    // Step 3: Prepare context for AI
+    // Step 3: Get repository pull requests for additional context
+    Logger.info(
+      `[Enrichment] Fetching recent pull requests for ${owner}/${name}`
+    );
+    const prsResult = await githubService.getRepositoryPullRequests(
+      owner,
+      name,
+      5
+    );
+    if (prsResult.success) {
+      Logger.info(
+        `[Enrichment] PRs data: ${prsResult.data.totalCount} total PRs, fetched ${prsResult.data.nodes.length} recent`
+      );
+    } else {
+      Logger.warn(`[Enrichment] PRs fetch failed: ${prsResult.error}`);
+    }
+
+    // Step 4: Get extra resources: README, commits, and requested file snippets
+    Logger.info(`[Enrichment] Fetching repository README for ${owner}/${name}`);
+    const readmeResult = await githubService.getRepositoryReadme(owner, name);
+    if (readmeResult.success) {
+      Logger.info(`[Enrichment] README fetched (${owner}/${name})`);
+    } else {
+      Logger.warn(`[Enrichment] README fetch failed: ${readmeResult.error}`);
+    }
+
+    Logger.info(`[Enrichment] Fetching recent commits for ${owner}/${name}`);
+    const commitsResult = await githubService.getRecentCommits(owner, name, 5);
+    if (commitsResult.success) {
+      Logger.info(
+        `[Enrichment] ${commitsResult.data.length} commits fetched for ${owner}/${name}`
+      );
+    } else {
+      Logger.warn(`[Enrichment] Commits fetch failed: ${commitsResult.error}`);
+    }
+
+    // Fetch user requested file snippets (limit 3 files to keep token usage reasonable)
+    const fileSnippets = [];
+    if (Array.isArray(requestedFiles) && requestedFiles.length) {
+      const limitedFiles = requestedFiles.slice(0, 3);
+      for (const path of limitedFiles) {
+        Logger.info(`[Enrichment] Fetching file content for ${path}`);
+        const fileResult = await githubService.getFileContent(
+          owner,
+          name,
+          path
+        );
+        if (fileResult.success) {
+          const snippet = (fileResult.data.content || "").slice(0, 1200); // 1200 chars max
+          fileSnippets.push({ path, snippet });
+        } else {
+          Logger.warn(
+            `[Enrichment] File fetch failed for ${path}: ${fileResult.error}`
+          );
+        }
+      }
+    }
+
+    // Step 4: Prepare context for AI
     const repoData = repoResult.data;
     const issuesData = issuesResult.success ? issuesResult.data : null;
+    const prsData = prsResult.success ? prsResult.data : null;
 
-    const contextPrompt = `
-Repository Information:
-- Name: ${repoData.name}
-- Description: ${repoData.description || "No description"}
-- Stars: ${repoData.stargazerCount}
-- Forks: ${repoData.forkCount}
-- Primary Language: ${repoData.primaryLanguage?.name || "Unknown"}
-- Created: ${repoData.createdAt}
-- Last Updated: ${repoData.updatedAt}
+    // Compact issues/PRs for the AI payload (short excerpts to control size)
+    const issuesSummary = issuesData
+      ? issuesData.nodes.slice(0, 10).map((issue) => ({
+          number: issue.number,
+          title: issue.title,
+          state: issue.state,
+          author: issue.author?.login || null,
+          labels: issue.labels.nodes.map((l) => l.name),
+          createdAt: issue.createdAt,
+          body_excerpt: (issue.body || "").slice(0, 400),
+        }))
+      : [];
 
-${
-  issuesData
-    ? `Recent Issues (${issuesData.totalCount} total):
-${issuesData.nodes
-  .slice(0, 3)
-  .map((issue) => `- #${issue.number}: ${issue.title} (${issue.state})`)
-  .join("\n")}`
-    : ""
-}
+    const prsSummary = prsData
+      ? prsData.nodes.slice(0, 10).map((pr) => ({
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          author: pr.author?.login || null,
+          additions: pr.additions,
+          deletions: pr.deletions,
+          changedFiles: pr.changedFiles,
+          createdAt: pr.createdAt,
+          body_excerpt: (pr.body || "").slice(0, 400),
+        }))
+      : [];
 
-User Question: ${analysisQuestion}
+    const payload = {
+      repo_url: `https://github.com/${owner}/${name}`,
+      analysis_goal: analysisQuestion,
+      files: requestedFiles || [],
+      programming_languages: programmingLanguages?.length
+        ? programmingLanguages
+        : repoData.languages?.nodes?.map((l) => l.name) || [],
+      frameworks: frameworks || [],
+      repo_description: repoData.description || "",
+      readme_excerpt:
+        readmeResult.success && readmeResult.data.content
+          ? readmeResult.data.content.replace(/\n/g, "\\n").slice(0, 1200)
+          : "",
+      recent_commits: commitsResult.success ? commitsResult.data : [],
+      issues: issuesSummary,
+      pull_requests: prsSummary,
+      requested_file_snippets: fileSnippets,
+    };
 
-Please analyze this repository and answer the question based on the provided data.`;
+    const contextPrompt = `Please analyze the following repository. Use the payload JSON to guide your response. Provide a detailed, actionable, and well-formatted analysis.\n\n${JSON.stringify(
+      payload,
+      null,
+      2
+    )}\n\nThe model must follow these output rules and formatting guidelines (do not change the top-level sections):\n\n- Include the following sections: Overview, Code Quality, Health Metrics, Areas for Improvement, and Recommendations.\n- For each section, provide:\n  * A 1-sentence summary.\n  * Key Findings: a short bullet list (include file paths when relevant).\n  * For each finding, add a Severity label (High / Medium / Low).\n  * Suggested Fix: a concise remediation.\n  * Estimated Effort: very short (Low/Medium/High or numeric hours).\n- When applicable, call out Security and Performance concerns as distinct findings in Areas for Improvement.\n- End with a short prioritized list of Recommendations (1-5 items), each with a rationale and expected impact.\n- Keep the whole reply concise and limit overall length (preferably under 900 words) while providing enough detail for action.\n\nOptional: please include a small JSON snippet at the end called 'analysis_summary_json' with keys overview, codeQuality, healthMetrics, areasForImprovement, and recommendations that mirrors the prose. This helps programmatic parsing but is optional.\n\nPlease start your response now:`;
 
-    // Step 4: Send to AI
+    // Step 5: Send to AI
     Logger.info(
       `[Enrichment] Sending context to AI (${contextPrompt.length} characters)`
     );
@@ -153,22 +323,67 @@ Please analyze this repository and answer the question based on the provided dat
       `[Enrichment] AI analysis completed successfully (${aiResult.data.choices[0].message.content.length} characters response)`
     );
 
-    // Step 5: Return enriched response
+    // Step 6: Parse AI analysis into structured sections
+    const aiContent = aiResult.data.choices[0].message.content;
+    const analysisSections = parseAnalysisIntoSections(aiContent);
+
+    // Step 7: Return enriched response
     return res.json({
       success: true,
       data: {
         repository: {
-          name: repoData.name,
-          owner: owner,
-          url: repoData.url,
-          stars: repoData.stargazerCount,
-          language: repoData.primaryLanguage?.name,
+          basic: {
+            name: repoData.name,
+            owner: owner,
+            url: repoData.url,
+            description: repoData.description,
+            createdAt: repoData.createdAt,
+            updatedAt: repoData.updatedAt,
+          },
+          stats: {
+            stars: repoData.stargazerCount,
+            forks: repoData.forkCount,
+          },
+          languages:
+            repoData.languages?.nodes?.map((l) => ({
+              name: l.name,
+              color: l.color,
+            })) || [],
+          branches: repoData.refs?.nodes?.map((r) => r.name) || [],
+          defaultBranch: repoData.defaultBranchRef?.name,
         },
-        analysis: aiResult.data.choices[0].message.content,
-        metadata: {
-          totalIssues: issuesData?.totalCount || 0,
-          lastUpdated: repoData.updatedAt,
-        },
+        readme: readmeResult.success ? readmeResult.data.content : null,
+        recentCommits: commitsResult.success ? commitsResult.data : [],
+        requestedFiles: fileSnippets,
+        issues: issuesData
+          ? {
+              totalCount: issuesData.totalCount,
+              recent: issuesData.nodes.slice(0, 3).map((issue) => ({
+                number: issue.number,
+                title: issue.title,
+                state: issue.state,
+                author: issue.author.login,
+                labels: issue.labels.nodes.map((l) => l.name),
+                createdAt: issue.createdAt,
+              })),
+            }
+          : null,
+        pullRequests: prsData
+          ? {
+              totalCount: prsData.totalCount,
+              recent: prsData.nodes.slice(0, 3).map((pr) => ({
+                number: pr.number,
+                title: pr.title,
+                state: pr.state,
+                author: pr.author.login,
+                additions: pr.additions,
+                deletions: pr.deletions,
+                changedFiles: pr.changedFiles,
+                createdAt: pr.createdAt,
+              })),
+            }
+          : null,
+        analysis: analysisSections,
       },
     });
   } catch (error) {
@@ -286,4 +501,5 @@ Please provide:
   }
 }
 
+export { parseAnalysisIntoSections };
 export default router;
