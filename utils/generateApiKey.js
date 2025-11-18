@@ -5,7 +5,7 @@ import path from "path";
 /**
  * Generate a secure random API key
  * Format: sk-[environment]-[random]
- *n
+ *
  * @param {string} environment - Environment prefix (prod, staging, dev)
  * @returns {string} A secure random API key
  *
