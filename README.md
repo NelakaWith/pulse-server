@@ -355,7 +355,7 @@ pm2 save
 
 ```bash
 curl "http://localhost:3000/api/enrichment?api_key=sk-prod-3c96ecbbe2b83a2130d69d25579b5361ca7ead272c478f61"
-````
+```
 
 ### Configuration
 
@@ -1350,3 +1350,4 @@ This project is licensed under the AGPL 3.0 License - see the [LICENSE](LICENSE)
 ---
 
 **Built with ❤️ for AI-powered applications**
+````
